@@ -287,35 +287,60 @@ async fetchUserOrders({ commit, rootState }) {
 },
     
     // Încarcă detaliile unei comenzi
-    async fetchOrderDetails({ state }, orderId) {
-      if (!state.currentUser) {
-        throw new Error('Utilizatorul nu este autentificat.');
+// Enhanced fetchOrderDetails method for user.js
+// Replace the existing fetchOrderDetails method with this one
+
+async fetchOrderDetails({ commit, state }, orderId) {
+  if (!orderId) {
+    throw new Error('ID-ul comenzii este obligatoriu');
+  }
+  
+  // First check if the order is already in state
+  if (state.userOrders && state.userOrders.length > 0) {
+    const cachedOrder = state.userOrders.find(order => order.id === orderId);
+    if (cachedOrder) {
+      console.log('Comanda a fost găsită în cache:', orderId);
+      return cachedOrder;
+    }
+  }
+  
+  try {
+    // If not in state, fetch from Firestore
+    console.log('Încărcăm comanda din Firestore:', orderId);
+    
+    const orderRef = doc(db, 'orders', orderId);
+    const orderDoc = await getDoc(orderRef);
+    
+    if (!orderDoc.exists()) {
+      throw new Error('Comanda nu a fost găsită.');
+    }
+    
+    const orderData = orderDoc.data();
+    
+    // Check if current user is authenticated
+    if (state.currentUser) {
+      // Verify if this order belongs to the current user, if user is logged in
+      if (orderData.userId && orderData.userId !== state.currentUser.uid) {
+        console.warn('Comandă găsită, dar nu aparține utilizatorului curent');
       }
-      
-      try {
-        const orderRef = doc(db, 'orders', orderId);
-        const orderDoc = await getDoc(orderRef);
-        
-        if (!orderDoc.exists()) {
-          throw new Error('Comanda nu a fost găsită.');
-        }
-        
-        const orderData = orderDoc.data();
-        
-        // Verificăm dacă este comanda utilizatorului curent
-        if (orderData.userId !== state.currentUser.uid) {
-          throw new Error('Nu aveți acces la această comandă.');
-        }
-        
-        return {
-          id: orderDoc.id,
-          ...orderData
-        };
-      } catch (error) {
-        console.error('Eroare la încărcarea detaliilor comenzii:', error);
-        throw new Error('Nu s-au putut încărca detaliile comenzii.');
-      }
-    },
+    }
+    
+    const order = {
+      id: orderDoc.id,
+      ...orderData
+    };
+    
+    // Cache the order in state
+    if (!state.userOrders.some(o => o.id === order.id)) {
+      commit('SET_USER_ORDERS', [...state.userOrders, order]);
+    }
+    
+    return order;
+  } catch (error) {
+    console.error('Eroare la încărcarea detaliilor comenzii:', error);
+    throw error;
+  }
+},
     
     // Încarcă recenziile utilizatorului
     async fetchUserReviews({ commit, state }) {
@@ -354,40 +379,105 @@ async fetchUserOrders({ commit, rootState }) {
     },
     
     // Adaugă o nouă recenzie
-    async submitReview({ commit, state, dispatch }, reviewData) {
-      if (!state.currentUser) {
-        throw new Error('Utilizatorul nu este autentificat.');
-      }
+// Versiune îmbunătățită a acțiunii submitReview din user.js
+async submitReview({ commit, state, dispatch }, reviewData) {
+  try {
+    // Verificăm autentificarea utilizatorului
+    if (!state.currentUser) {
+      throw new Error('Trebuie să fiți autentificat pentru a trimite o recenzie');
+    }
+    
+    // Validare câmpuri obligatorii
+    if (!reviewData.product_id) {
+      throw new Error('ID-ul produsului este obligatoriu');
+    }
+    
+    if (!reviewData.rating || reviewData.rating < 1 || reviewData.rating > 5) {
+      throw new Error('Rating-ul trebuie să fie între 1 și 5');
+    }
+    
+    if (!reviewData.title || !reviewData.comment) {
+      throw new Error('Titlul și comentariul sunt obligatorii');
+    }
+    
+    // Setăm datele utilizatorului dacă lipsesc
+    if (!reviewData.user_id) {
+      reviewData.user_id = state.currentUser.uid;
+    }
+    
+    if (!reviewData.user_name) {
+      reviewData.user_name = state.currentUser.displayName || 'Utilizator anonim';
+    }
+    
+    // Asigurăm-ne că avem verificare achiziție
+    if (reviewData.verified_purchase === undefined) {
+      reviewData.verified_purchase = true;
+    }
+    
+    // Asigurăm-ne că avem data
+    if (!reviewData.date) {
+      reviewData.date = new Date().toISOString().split('T')[0];
+    }
+    
+    // Verificăm dacă este o actualizare sau o recenzie nouă
+    let reviewRef;
+    
+    if (reviewData.id) {
+      // Actualizăm o recenzie existentă
+      reviewRef = doc(db, 'reviews', reviewData.id);
       
-      try {
-        // Adăugăm detaliile utilizatorului
-        const userId = state.currentUser.uid;
-        const userName = state.currentUser.displayName || state.userProfile?.displayName || 'Utilizator Anonim';
-        
-        const newReview = {
-          ...reviewData,
-          user_id: userId,
-          user_name: userName,
-          date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
-          verified_purchase: true
-        };
-        
-        // Adăugăm recenzia în Firestore
-        const reviewRef = collection(db, 'reviews');
-        const docRef = await addDoc(reviewRef, newReview);
-        
-        // Actualizăm lista de recenzii în store
-        await dispatch('fetchUserReviews');
-        
-        return {
-          id: docRef.id,
-          ...newReview
-        };
-      } catch (error) {
-        console.error('Eroare la adăugarea recenziei:', error);
-        throw new Error('Nu s-a putut adăuga recenzia.');
+      // Eliminăm ID-ul din datele de actualizat
+      const { id, ...updateData } = reviewData;
+      
+      // Actualizăm recenzia în Firestore
+      await updateDoc(reviewRef, {
+        ...updateData,
+        updated_date: new Date().toISOString().split('T')[0]
+      });
+      
+      console.log('Recenzie actualizată cu succes:', reviewData.id);
+    } else {
+      // Creăm o recenzie nouă
+      
+      // Creăm o referință nouă pentru recenzie
+      const reviewsCollection = collection(db, 'reviews');
+      
+      // Eliminăm câmpurile care nu ar trebui să fie în baza de date
+      const { isPlaceholderProduct, ...cleanData } = reviewData;
+      
+      // Adăugăm recenzia în Firestore
+      const docRef = await addDoc(reviewsCollection, {
+        ...cleanData,
+        date: cleanData.date || new Date().toISOString().split('T')[0]
+      });
+      
+      console.log('Recenzie adăugată cu succes. ID:', docRef.id);
+      
+      // Actualizăm comanda pentru a o marca ca recenzată dacă order_id este furnizat
+      if (reviewData.order_id) {
+        try {
+          const orderRef = doc(db, 'orders', reviewData.order_id);
+          await updateDoc(orderRef, {
+            reviewed: true
+          });
+          console.log('Comandă marcată ca recenzată:', reviewData.order_id);
+        } catch (orderError) {
+          // Eroare non-critică, doar o logăm
+          console.error('Eroare la marcarea comenzii ca recenzată:', orderError);
+        }
       }
-    },
+    }
+    
+    // Actualizăm recenziile în state
+    await dispatch('fetchUserReviews');
+    
+    return true;
+  } catch (error) {
+    console.error('Eroare la trimiterea recenziei:', error);
+    commit('SET_ERROR', error.message);
+    throw error;
+  }
+},   
     
     // Editează o recenzie existentă
     async editReview({ state, dispatch }, { reviewId, reviewData }) {

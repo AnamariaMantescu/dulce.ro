@@ -107,52 +107,7 @@
             @delete-review="deleteReview"
           />
         </div>
-        
-        <!-- Add Review Tab -->
-        <div v-else-if="activeTab === 'addReview'" class="tab-panel">
-          <div class="add-review-section">
-            <div class="review-intro">
-              <div class="intro-icon">✏️</div>
-              <h3>Adaugă o Recenzie Nouă</h3>
-              <p>Ați cumpărat recent un produs de la noi? Împărtășiți-vă experiența și ajutați alți clienți să ia decizia potrivită.</p>
-            </div>
-            
-            <div class="purchase-selection">
-              <h4>Selectați un produs achiziționat pentru a-l recenza</h4>
-              
-              <div v-if="loadingOrders" class="tab-loading">
-                <div class="loader-dots">
-                  <div></div><div></div><div></div>
-                </div>
-                <p>Se încarcă produsele achiziționate...</p>
-              </div>
-              
-              <div v-else-if="!recentOrderProducts || recentOrderProducts.length === 0" class="no-products">
-                <p>Nu aveți produse eligibile pentru recenzie. Puteți recenza doar produsele pe care le-ați achiziționat.</p>
-                <router-link to="/products" class="browse-btn">
-                  Descoperă produsele noastre
-                </router-link>
-              </div>
-              
-              <div v-else class="product-grid">
-                <div 
-                  v-for="product in recentOrderProducts" 
-                  :key="product.id"
-                  class="product-card"
-                  @click="selectProductForReview(product)"
-                >
-                  <div class="product-image">
-                    <img :src="product.image || '/api/placeholder/120/120'" :alt="product.name">
-                  </div>
-                  <div class="product-info">
-                    <h5 class="product-name">{{ product.name }}</h5>
-                    <p class="product-order">Comandă #{{ formatOrderId(product.orderId) }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Logout Button -->
         <div v-else-if="activeTab === 'logout'" class="tab-panel">
@@ -242,7 +197,6 @@ export default {
         { id: 'profile', label: 'Profil', icon: '👤' },
         { id: 'orders', label: 'Comenzi', icon: '📦' },
         { id: 'reviews', label: 'Recenzii', icon: '⭐' },
-        { id: 'addReview', label: 'Adaugă Recenzie', icon: '✏️' },
         { id: 'logout', label: 'Deconectare', icon: '🚪' }
       ]
     };
@@ -433,41 +387,187 @@ export default {
       }
     },
     
-    async showAddReviewModal(data) {
-      this.selectedOrderId = data.orderId;
-      this.loadingProductDetails = true;
-      
+// Varianta îmbunătățită pentru showAddReviewModal
+async showAddReviewModal(data) {
+  this.selectedOrderId = data.orderId;
+  this.loadingProductDetails = true;
+  
+  try {
+    // Dacă avem un product ID valid, folosim API-ul pentru a încărca detaliile
+    if (data.productId && data.productId !== 'unknown') {
+      console.log('Încărcăm detalii produs cu ID:', data.productId);
       try {
-        // Fetch product details
         const productDetails = await this.$store.dispatch('products/fetchProductById', data.productId);
-        this.selectedProduct = productDetails;
-        this.showReviewModal = true;
-      } catch (error) {
-        console.error('Error fetching product details:', error);
-        this.showNotification('Eroare la încărcarea detaliilor produsului', 'error');
-      } finally {
-        this.loadingProductDetails = false;
-      }
-    },
-    
-    async submitReview(reviewData) {
-      try {
-        await this.$store.dispatch('user/submitReview', reviewData);
-        this.showReviewModal = false;
         
-        // Refresh reviews and available products for review
-        if (this.activeTab === 'reviews') {
-          await this.fetchUserReviews();
-        } else if (this.activeTab === 'addReview') {
-          await this.loadRecentOrderProducts();
+        if (productDetails) {
+          this.selectedProduct = productDetails;
+          this.showReviewModal = true;
+        } else {
+          throw new Error(`Produsul cu ID ${data.productId} nu a fost găsit`);
         }
-        
-        this.showNotification('Recenzie trimisă cu succes', 'success');
       } catch (error) {
-        console.error('Error submitting review:', error);
-        this.showNotification('Eroare la trimiterea recenziei', 'error');
+        console.warn(`Nu am putut încărca produsul cu ID ${data.productId}, vom încerca să folosim comanda.`);
+        // Continuăm cu căutarea în comandă dacă produsul nu poate fi încărcat
       }
-    },
+      
+      // Dacă am setat deja produsul, ieșim din funcție
+      if (this.selectedProduct) {
+        this.loadingProductDetails = false;
+        return;
+      }
+    }
+    
+    console.log('Căutăm produse în comandă');
+    
+    // Încercăm să găsim comanda în starea locală
+    let order = this.userOrders.find(o => o.id === data.orderId);
+    
+    // Dacă nu am găsit comanda în starea locală, o încărcăm din Firestore
+    if (!order) {
+      console.log('Comanda nu a fost găsită în starea locală, încercăm să o încărcăm');
+      try {
+        order = await this.$store.dispatch('user/fetchOrderDetails', data.orderId);
+        
+        // Dacă este o comandă nouă pe care am încărcat-o, o adăugăm în starea locală
+        if (order && !this.userOrders.some(o => o.id === order.id)) {
+          this.userOrders.push(order);
+        }
+      } catch (orderError) {
+        console.error('Eroare la încărcarea comenzii:', orderError);
+      }
+    }
+    
+    // Dacă am găsit comanda, încercăm să extragem primul produs din ea
+    if (order) {
+      // Verificăm dacă comanda are produse în formatul 'items'
+      if (order.items && order.items.length > 0) {
+        const item = order.items[0];
+        this.selectedProduct = {
+          id: item.id || item.productId || 'unknown',
+          name: item.name || 'Produs necunoscut',
+          price: item.price || 0,
+          image: item.image || '',
+          // Nu facem un fetch după acest ID, folosim direct datele din comandă
+        };
+        
+        console.log('Produs găsit în comandă:', this.selectedProduct);
+      } 
+      // Verificăm dacă comanda are produse în formatul 'products'
+      else if (order.products && order.products.length > 0) {
+        const product = order.products[0];
+        this.selectedProduct = {
+          id: product.productId || product.id || 'unknown',
+          name: product.name || 'Produs necunoscut',
+          price: product.price || 0,
+          image: product.image || '',
+          // Nu facem un fetch după acest ID, folosim direct datele din comandă
+        };
+        
+        console.log('Produs găsit în comandă (structură alternativă):', this.selectedProduct);
+      }
+      // Dacă comanda nu conține produse, folosim un placeholder
+      else {
+        console.log('Comanda nu conține produse, folosim un placeholder');
+        this.selectedProduct = {
+          id: 'unknown',
+          name: 'Produs din comanda #' + this.formatOrderId(data.orderId),
+          price: 0
+        };
+      }
+    } 
+    // Dacă nu am găsit deloc comanda, folosim un placeholder generic
+    else {
+      console.warn('Comanda nu a putut fi încărcată, folosim un produs placeholder');
+      this.selectedProduct = {
+        id: 'unknown',
+        name: 'Produs necunoscut',
+        price: 0
+      };
+    }
+    
+    // Deschidem formularul de recenzie
+    this.showReviewModal = true;
+  } catch (error) {
+    console.error('Eroare la pregătirea formularului de recenzie:', error);
+    this.showNotification(
+      'Nu am putut pregăti formularul de recenzie: ' + error.message,
+      'error'
+    );
+  } finally {
+    this.loadingProductDetails = false;
+  }
+},
+
+    
+// Updated submitReview method for Account.vue
+async submitReview(reviewData) {
+  try {
+    console.log('Trimitem recenzie:', reviewData);
+    
+    // Ensure we have required fields
+    if (!reviewData.product_id) {
+      // If product_id is missing, use the selectedProduct.id
+      if (this.selectedProduct && this.selectedProduct.id) {
+        reviewData.product_id = this.selectedProduct.id;
+      } else {
+        throw new Error('ID-ul produsului este obligatoriu pentru recenzie');
+      }
+    }
+    
+    // Ensure we have order_id
+    if (!reviewData.order_id && this.selectedOrderId) {
+      reviewData.order_id = this.selectedOrderId;
+    }
+    
+    // Add user information if missing
+    if (!reviewData.user_id && this.user) {
+      reviewData.user_id = this.user.uid;
+    }
+    
+    if (!reviewData.user_name && this.user) {
+      reviewData.user_name = this.user.displayName || 'Utilizator anonim';
+    }
+    
+    // Set verified_purchase to true by default
+    if (reviewData.verified_purchase === undefined) {
+      reviewData.verified_purchase = true;
+    }
+    
+    // Add date if missing
+    if (!reviewData.date) {
+      reviewData.date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    }
+    
+    // Check if this is a new review or an update
+    const isUpdate = reviewData.id ? true : false;
+    
+    await this.$store.dispatch('user/submitReview', reviewData);
+    this.showReviewModal = false;
+    
+    // Mark the order as reviewed in the local state
+    if (this.selectedOrderId && !isUpdate) {
+      const orderIndex = this.userOrders.findIndex(o => o.id === this.selectedOrderId);
+      if (orderIndex !== -1) {
+        this.userOrders[orderIndex].reviewed = true;
+      }
+    }
+    
+    // Refresh reviews and available products for review
+    if (this.activeTab === 'reviews') {
+      await this.fetchUserReviews();
+    } else if (this.activeTab === 'addReview') {
+      await this.loadRecentOrderProducts();
+    }
+    
+    this.showNotification(
+      isUpdate ? 'Recenzie actualizată cu succes' : 'Recenzie trimisă cu succes', 
+      'success'
+    );
+  } catch (error) {
+    console.error('Eroare la trimiterea recenziei:', error);
+    this.showNotification('Eroare la trimiterea recenziei: ' + error.message, 'error');
+  }
+},
     
     async editReview(review) {
       this.selectedOrderId = review.order_id;
@@ -576,7 +676,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7));
+  background: linear-gradient(to bottom, #bf9099, rgba(102, 54, 54, 0.7));
 }
 
 .hero-content {

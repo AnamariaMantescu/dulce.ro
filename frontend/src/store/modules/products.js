@@ -176,36 +176,63 @@ async fetchProductsByCategory({ commit, state }, categoryName) {
   }
 },
     
-    async fetchProductById({ commit }, productId) {
-      commit('SET_LOADING', true);
-      try {
-        const productRef = doc(db, 'products', productId);
-        const docSnap = await getDoc(productRef);
-        
-        if (docSnap.exists()) {
-          const product = {
-            id: docSnap.id,
-            ...docSnap.data()
-          };
-          
-          commit('SET_CURRENT_PRODUCT', product);
-          console.log(`Produs încărcat: ${product.name}`);
-          return product;
-        } else {
-          console.log(`Produsul cu ID-ul ${productId} nu există`);
-          commit('SET_CURRENT_PRODUCT', null);
-          commit('SET_ERROR', 'Produsul nu a fost găsit');
-          return null;
-        }
-      } catch (error) {
-        console.error(`Eroare la încărcarea produsului ${productId}:`, error);
-        commit('SET_ERROR', error.message);
-        commit('SET_CURRENT_PRODUCT', null);
-        return null;
-      } finally {
-        commit('SET_LOADING', false);
-      }
-    },
+// Updated fetchProductById method for products.js
+// Versiune îmbunătățită a metodei fetchProductById pentru products.js
+async fetchProductById({ commit }, productId) {
+  // Verificăm dacă ID-ul produsului este valid
+  if (!productId) {
+    console.error('ID produs invalid sau lipsă');
+    commit('SET_ERROR', 'ID produs lipsă sau invalid');
+    commit('SET_CURRENT_PRODUCT', null);
+    return null;
+  }
+  
+  // Verificăm cazul special pentru placeholder
+  if (productId === 'unknown') {
+    console.log('ID produs "unknown" detectat - se returnează un produs placeholder');
+    // Returnăm un obiect placeholder fără a face cerere către Firestore
+    const placeholderProduct = {
+      id: 'unknown',
+      name: 'Produs necunoscut',
+      price: 0,
+      description: 'Produs generic pentru recenzie',
+      isPlaceholder: true
+    };
+    
+    // Nu actualizăm starea, returnăm doar obiectul placeholder
+    return placeholderProduct;
+  }
+  
+  // Pentru ID-uri normale, continuăm cu logica existentă
+  commit('SET_LOADING', true);
+  try {
+    const productRef = doc(db, 'products', productId);
+    const docSnap = await getDoc(productRef);
+    
+    if (docSnap.exists()) {
+      const product = {
+        id: docSnap.id,
+        ...docSnap.data()
+      };
+      
+      commit('SET_CURRENT_PRODUCT', product);
+      console.log(`Produs încărcat: ${product.name}`);
+      return product;
+    } else {
+      console.log(`Produsul cu ID-ul ${productId} nu există`);
+      commit('SET_CURRENT_PRODUCT', null);
+      commit('SET_ERROR', 'Produsul nu a fost găsit');
+      return null;
+    }
+  } catch (error) {
+    console.error(`Eroare la încărcarea produsului ${productId}:`, error);
+    commit('SET_ERROR', error.message);
+    commit('SET_CURRENT_PRODUCT', null);
+    return null;
+  } finally {
+    commit('SET_LOADING', false);
+  }
+},
     
     async searchProducts({ commit }, searchTerm) {
       if (!searchTerm || searchTerm.trim() === '') {

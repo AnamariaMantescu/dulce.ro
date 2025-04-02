@@ -1,114 +1,137 @@
 <!-- components/user/UserReviewForm.vue -->
 <template>
   <div class="review-form-modal">
-    <div class="review-form-container">
+    <div class="modal-content">
       <div class="modal-header">
-        <h2>Scrie o recenzie</h2>
-        <p v-if="product">pentru {{ product.name }}</p>
-        <button class="close-btn" @click="$emit('close')">×</button>
+        <h2>{{ isEditing ? 'Editare Recenzie' : 'Adaugă o Recenzie' }}</h2>
+        <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
-      
+
       <div v-if="loading" class="loading-container">
-        <div class="loader"></div>
+        <div class="loading-spinner"></div>
         <p>Se încarcă...</p>
       </div>
-      
-      <form v-else @submit.prevent="submitReview" class="review-form">
-        <div class="form-group">
-          <label for="rating">Rating</label>
-          <div class="star-rating">
-            <button 
-              v-for="star in 5" 
-              :key="star" 
-              type="button"
-              class="star-btn" 
-              :class="{ 'active': star <= rating }"
-              @click="rating = star"
+
+      <div v-else class="form-content">
+        <form @submit.prevent="submitReview" class="review-form">
+          <!-- Product Selection -->
+          <div v-if="availableProducts && availableProducts.length > 0" class="form-group">
+            <label for="product">Produs</label>
+            <select 
+              id="product" 
+              v-model="review.product_id" 
+              required
+              :disabled="isEditing || productPreselected"
             >
-              ★
+              <option value="" disabled>Selectați produsul</option>
+              <option 
+                v-for="prod in availableProducts" 
+                :key="prod.id || prod.productId" 
+                :value="prod.id || prod.productId"
+              >
+                {{ prod.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Product Preview -->
+          <div v-if="selectedProduct && selectedProduct.name" class="product-preview">
+            <div class="preview-details">
+              <h3>{{ selectedProduct.name }}</h3>
+              <p v-if="selectedProduct.price">{{ formatPrice(selectedProduct.price) }}</p>
+            </div>
+          </div>
+
+          <!-- Rating Stars -->
+          <div class="form-group">
+            <label>Rating</label>
+            <div class="star-rating-input">
+              <span 
+                v-for="star in 5" 
+                :key="star" 
+                class="star-input" 
+                :class="{ 'filled': star <= review.rating }"
+                @click="review.rating = star"
+                @mouseover="hoverRating = star"
+                @mouseleave="hoverRating = 0"
+              >★</span>
+              <span class="rating-text">{{ getRatingText() }}</span>
+            </div>
+          </div>
+
+          <!-- Review Title -->
+          <div class="form-group">
+            <label for="review-title">Titlu</label>
+            <input 
+              type="text" 
+              id="review-title" 
+              v-model="review.title"
+              placeholder="Un titlu scurt pentru recenzia ta"
+              required
+            >
+          </div>
+
+          <!-- Review Comment -->
+          <div class="form-group">
+            <label for="review-comment">Comentariu</label>
+            <textarea 
+              id="review-comment" 
+              v-model="review.comment"
+              placeholder="Împărtășește experiența ta cu acest produs..."
+              rows="5"
+              required
+            ></textarea>
+            <div class="char-counter" :class="{ 'limit-warning': review.comment.length > 800 }">
+              {{ review.comment.length }}/1000
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label>Etichete (opțional)</label>
+            <div class="tags-container">
+              <div class="available-tags">
+                <div 
+                  v-for="tag in availableTags" 
+                  :key="tag"
+                  class="tag-option"
+                  :class="{ 'selected': review.tags.includes(tag) }"
+                  @click="toggleTag(tag)"
+                >
+                  {{ tag }}
+                </div>
+              </div>
+              
+              <div class="custom-tag-input">
+                <input 
+                  type="text" 
+                  v-model="customTag" 
+                  placeholder="Adaugă o etichetă personalizată"
+                  @keyup.enter="addCustomTag"
+                >
+                <button type="button" class="add-tag-btn" @click="addCustomTag">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+
+          <!-- Submit Button -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="$emit('close')">Anulează</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+              <span v-if="isSubmitting">
+                <span class="submitting-icon"></span>
+                Se trimite...
+              </span>
+              <span v-else>{{ isEditing ? 'Salvează Modificările' : 'Trimite Recenzia' }}</span>
             </button>
           </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="title">Titlu recenzie</label>
-          <input 
-            type="text" 
-            id="title" 
-            v-model="title" 
-            placeholder="Rezumă experiența ta" 
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="comment">Recenzia ta</label>
-          <textarea 
-            id="comment" 
-            v-model="comment" 
-            rows="5" 
-            placeholder="Ce ți-a plăcut sau ce nu ți-a plăcut la produs?" 
-            required
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Etichete</label>
-          <div class="tags-container">
-            <div 
-              v-for="(tag, index) in availableTags" 
-              :key="index"
-              class="tag-item"
-              :class="{ 'active': selectedTags.includes(tag) }"
-              @click="toggleTag(tag)"
-            >
-              {{ tag }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label class="photo-label">
-            <span>Adaugă fotografii (opțional)</span>
-            <div class="photo-preview-area">
-              <div 
-                v-for="(photo, index) in photoPreviewUrls" 
-                :key="index" 
-                class="photo-preview"
-              >
-                <img :src="photo" alt="Preview" />
-                <button type="button" class="remove-photo-btn" @click="removePhoto(index)">
-                  ×
-                </button>
-              </div>
-              <div class="photo-upload-box" @click="triggerFileInput" v-if="photoPreviewUrls.length < 3">
-                <span>+</span>
-              </div>
-            </div>
-            <input 
-              type="file" 
-              ref="fileInput" 
-              accept="image/*" 
-              @change="handleFileUpload" 
-              multiple
-              style="display: none;"
-            />
-          </label>
-        </div>
-        
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" @click="$emit('close')">
-            Renunță
-          </button>
-          <button 
-            type="submit" 
-            class="btn btn-primary" 
-            :disabled="isSubmitting || !isValid"
-          >
-            {{ isSubmitting ? 'Se trimite...' : 'Trimite recenzia' }}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -119,11 +142,15 @@ export default {
   props: {
     orderId: {
       type: String,
-      required: true
+      default: ''
     },
     product: {
       type: Object,
-      default: null
+      default: () => null
+    },
+    availableProducts: {
+      type: Array,
+      default: () => []
     },
     loading: {
       type: Boolean,
@@ -132,415 +159,578 @@ export default {
   },
   data() {
     return {
-      rating: 5,
-      title: '',
-      comment: '',
-      photos: [],
-      photoPreviewUrls: [],
+      review: {
+        title: '',
+        rating: 0,
+        comment: '',
+        product_id: '',
+        tags: [],
+        verified_purchase: true,
+        order_id: this.orderId || '',
+      },
+      availableTags: ['calitate', 'gust', 'servire', 'aspect', 'ambalaj', 'preț', 'valoare'],
+      customTag: '',
+      hoverRating: 0,
+      error: '',
       isSubmitting: false,
-      selectedTags: [],
-      availableTags: [
-        'calitate', 
-        'gust', 
-        'aspect', 
-        'prospețime',
-        'preț', 
-        'servicii', 
-        'rapiditate',
-        'ambalaj'
-      ]
-    }
+    };
   },
   computed: {
-    isValid() {
-      return this.rating > 0 && this.title.trim() && this.comment.trim();
+    isEditing() {
+      return this.product && this.product.existingReview;
+    },
+    productPreselected() {
+      return !!this.product && !!this.product.id;
+    },
+    selectedProduct() {
+      return this.product;
+    }
+  },
+  watch: {
+    product: {
+      immediate: true,
+      handler(newProduct) {
+        if (newProduct) {
+          // Dacă avem o recenzie existentă, populăm formularul cu ea
+          if (newProduct.existingReview) {
+            const existingReview = newProduct.existingReview;
+            this.review = {
+              ...existingReview,
+              product_id: existingReview.product_id || newProduct.id || newProduct.productId || '',
+              tags: existingReview.tags || [],
+              order_id: existingReview.order_id || this.orderId || ''
+            };
+          } else {
+            // Recenzie nouă pentru un produs selectat
+            // Folosim ID-ul produsului chiar dacă este 'unknown'
+            this.review.product_id = newProduct.id || newProduct.productId || '';
+            
+            // Dacă avem un nume de produs, îl folosim pentru un titlu predefinit
+            if (newProduct.name && newProduct.name !== 'Produs necunoscut') {
+              this.review.title = `Recenzie pentru ${newProduct.name}`;
+            }
+          }
+        }
+      }
     }
   },
   methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('ro-RO', { 
+        style: 'currency', 
+        currency: 'RON' 
+      }).format(price);
+    },
+    getRatingText() {
+      const rating = this.hoverRating || this.review.rating;
+      const ratingTexts = [
+        '',
+        'Nesatisfăcător',
+        'Acceptabil',
+        'Bun',
+        'Foarte Bun',
+        'Excelent'
+      ];
+      return ratingTexts[rating];
+    },
     toggleTag(tag) {
-      if (this.selectedTags.includes(tag)) {
-        this.selectedTags = this.selectedTags.filter(t => t !== tag);
+      if (this.review.tags.includes(tag)) {
+        this.review.tags = this.review.tags.filter(t => t !== tag);
       } else {
-        // Limit to 4 tags maximum
-        if (this.selectedTags.length < 4) {
-          this.selectedTags.push(tag);
-        }
+        this.review.tags.push(tag);
       }
     },
-    triggerFileInput() {
-      this.$refs.fileInput.click();
-    },
-    handleFileUpload(event) {
-      const files = event.target.files;
-      if (!files.length) return;
-      
-      // Limit to 3 photos total
-      const remainingSlots = 3 - this.photos.length;
-      const filesToAdd = Array.from(files).slice(0, remainingSlots);
-      
-      filesToAdd.forEach(file => {
-        // Create preview URL
-        const reader = new FileReader();
-        reader.onload = e => {
-          this.photoPreviewUrls.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-        
-        // Add to photos array
-        this.photos.push(file);
-      });
-    },
-    removePhoto(index) {
-      this.photos.splice(index, 1);
-      this.photoPreviewUrls.splice(index, 1);
+    addCustomTag() {
+      if (this.customTag && this.customTag.trim().length) {
+        const tag = this.customTag.trim();
+        if (!this.review.tags.includes(tag)) {
+          this.review.tags.push(tag);
+        }
+        this.customTag = '';
+      }
     },
     async submitReview() {
-      if (!this.isValid || this.isSubmitting) return;
-      
-      this.isSubmitting = true;
-      
       try {
-        // Create review object matching your database structure
-        const reviewData = {
-          comment: this.comment,
-          date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
-          product_id: this.product?.id,
-          rating: this.rating,
-          tags: this.selectedTags,
-          title: this.title,
-          user_id: this.$store.getters['user/currentUser']?.uid || 'user-unknown',
-          user_name: this.$store.getters['user/currentUser']?.displayName || 'Utilizator',
-          verified_purchase: true
-        };
+        this.error = '';
+        this.isSubmitting = true;
         
-        // Handle images
-        if (this.photos.length > 0) {
-          // In a real implementation, we would upload photos to Firebase Storage
-          // and get back URLs to store with the review
-          // For now, simulate this with placeholder URLs
-          reviewData.images = this.photos.map((_, i) => 
-            `url_review_img${i + 1}.jpg`
-          );
+        // Validare pentru câmpuri
+        if (this.review.rating === 0) {
+          this.error = 'Te rugăm să selectezi un rating.';
+          this.isSubmitting = false;
+          return;
         }
         
-        // Emit the review data to parent component
-        this.$emit('submit-review', reviewData);
+        if (this.review.comment.length > 1000) {
+          this.error = 'Comentariul este prea lung (max 1000 caractere).';
+          this.isSubmitting = false;
+          return;
+        }
         
-      } catch (error) {
-        console.error('Error submitting review:', error);
-        this.$emit('error', 'Nu s-a putut trimite recenzia. Vă rugăm să încercați din nou.');
+        // Pregătirea datelor recenziei
+        const reviewData = {
+          ...this.review,
+          date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
+        };
+        
+        // Verificăm dacă product_id este 'unknown' și generăm un ID aleator
+        if (this.review.product_id === 'unknown' || !this.review.product_id) {
+          const randomId = 'temp-' + Math.random().toString(36).substring(2, 15);
+          console.log('Folosim un ID temporar pentru recenzie:', randomId);
+          reviewData.product_id = randomId;
+          reviewData.isPlaceholderProduct = true;
+        }
+        
+        // Emitem evenimentul cu datele recenziei
+        this.$emit('submit-review', reviewData);
+      } catch (err) {
+        console.error('Eroare la trimiterea recenziei:', err);
+        this.error = 'A apărut o eroare. Te rugăm să încerci din nou.';
+        this.$emit('error', this.error);
       } finally {
         this.isSubmitting = false;
       }
     }
   }
-}
+};
 </script>
 
 <style scoped>
 .review-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.3s ease;
 }
 
-.review-form-container {
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 550px;
-  margin: 0 auto;
-  overflow: hidden;
-  animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
-  position: relative;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
 }
 
 .modal-header h2 {
-  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
-  font-size: 1.8rem;
-  font-weight: 400;
-  color: #333;
-  margin: 0 0 0.3rem 0;
-}
-
-.modal-header p {
   margin: 0;
-  color: #666;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
+  color: #333;
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
 }
 
 .close-btn {
-  position: absolute;
-  top: 1.2rem;
-  right: 1.5rem;
   background: transparent;
   border: none;
-  font-size: 2rem;
-  line-height: 1;
+  font-size: 1.5rem;
   cursor: pointer;
   color: #999;
-  transition: color 0.2s ease;
 }
 
 .close-btn:hover {
   color: #333;
 }
 
-/* Loading State */
+.form-content {
+  padding: 20px;
+  flex-grow: 1;
+}
+
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
-  padding: 2rem;
+  padding: 40px 0;
+  text-align: center;
 }
 
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid rgba(181, 131, 141, 0.2);
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(181, 131, 141, 0.3);
   border-radius: 50%;
-  border-top: 5px solid #b5838d;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  border-top-color: #b5838d;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Form */
 .review-form {
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.6rem;
   font-weight: 500;
-  color: #333;
+  color: #555;
   font-size: 0.95rem;
 }
 
-/* Star Rating */
-.star-rating {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.star-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: #ddd;
-  transition: color 0.2s;
-  padding: 0;
-  line-height: 1;
-}
-
-.star-btn.active {
-  color: #b5838d;
-}
-
-/* Input Fields */
-input[type="text"],
-textarea {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+input, textarea, select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  font-family: 'Montserrat', 'Helvetica Neue', sans-serif;
 }
 
-input[type="text"]:focus,
-textarea:focus {
-  border-color: #b5838d;
+input:focus, textarea:focus, select:focus {
   outline: none;
+  border-color: #b5838d;
   box-shadow: 0 0 0 3px rgba(181, 131, 141, 0.1);
 }
 
-/* Tags */
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+textarea {
+  resize: vertical;
+  min-height: 120px;
 }
 
-.tag-item {
-  padding: 0.4rem 0.8rem;
-  background-color: #f5f5f5;
-  border-radius: 50px;
+.char-counter {
+  align-self: flex-end;
   font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+  color: #999;
 }
 
-.tag-item:hover {
-  background-color: #f0f0f0;
+.limit-warning {
+  color: #e74c3c;
 }
 
-.tag-item.active {
-  background-color: rgba(181, 131, 141, 0.1);
-  color: #b5838d;
-  border-color: rgba(181, 131, 141, 0.3);
-}
-
-/* Photo Upload */
-.photo-label {
-  cursor: pointer;
-}
-
-.photo-preview-area {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.photo-preview {
-  position: relative;
-  width: 80px;
-  height: 80px;
+/* Product Preview */
+.product-preview {
+  background-color: #f9f9f9;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
 }
 
-.photo-preview img {
+.preview-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.preview-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.remove-photo-btn {
+.preview-details h3 {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.preview-details p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #b5838d;
+  font-weight: 500;
+}
+
+/* Star Rating Input */
+.star-rating-input {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.star-input {
+  font-size: 2rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.star-input.filled {
+  color: #b5838d;
+}
+
+.star-input:hover {
+  transform: scale(1.1);
+}
+
+.rating-text {
+  font-size: 0.9rem;
+  color: #666;
+  width: 100px;
+}
+
+/* Tags */
+.tags-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.available-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-option {
+  padding: 6px 12px;
+  background-color: #f1f1f1;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tag-option:hover {
+  background-color: #e9e9e9;
+}
+
+.tag-option.selected {
+  background-color: rgba(181, 131, 141, 0.1);
+  color: #b5838d;
+  border: 1px solid rgba(181, 131, 141, 0.3);
+}
+
+.custom-tag-input {
+  display: flex;
+  gap: 10px;
+}
+
+.custom-tag-input input {
+  flex-grow: 1;
+}
+
+.add-tag-btn {
+  width: 40px;
+  height: 40px;
+  background-color: #b5838d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-tag-btn:hover {
+  background-color: #9c7082;
+  transform: scale(1.05);
+}
+
+/* Image Upload */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.preview-thumbnail {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.preview-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
   position: absolute;
   top: 5px;
   right: 5px;
-  background: rgba(0, 0, 0, 0.5);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
   color: white;
   border: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.remove-image-btn:hover {
+  opacity: 1;
+}
+
+.upload-btn-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.upload-btn {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  border-color: #b5838d;
+  background: rgba(181, 131, 141, 0.05);
+}
+
+.upload-icon {
+  font-size: 2rem;
+  color: #999;
+  margin-bottom: 5px;
+}
+
+.upload-btn-wrapper input[type=file] {
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-help {
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0;
+}
+
+/* Error Message */
+.error-message {
+  padding: 12px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 3px solid #e74c3c;
+  color: #e74c3c;
+  border-radius: 4px;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.remove-photo-btn:hover {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-.photo-upload-box {
-  width: 80px;
-  height: 80px;
-  border: 2px dashed #e0e0e0;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.photo-upload-box:hover {
-  border-color: #b5838d;
-  background-color: rgba(181, 131, 141, 0.03);
-}
-
-.photo-upload-box span {
-  font-size: 1.8rem;
-  color: #ccc;
-}
-
-/* Action Buttons */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.btn {
-  padding: 0.8rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  font-size: 0.95rem;
-  font-family: 'Montserrat', 'Helvetica Neue', sans-serif;
-}
-
-.btn-primary {
-  background: linear-gradient(to right, #b5838d, #9c27b0);
-  color: white;
-  box-shadow: 0 4px 12px rgba(181, 131, 141, 0.2);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(181, 131, 141, 0.3);
-}
-
-.btn-primary:disabled {
-  background: linear-gradient(to right, #d1b3bd, #ce93d8);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  gap: 8px;
 }
 
 .btn-secondary {
-  background-color: transparent;
+  background-color: #f0f0f0;
   color: #666;
-  border: 1px solid #e0e0e0;
+  border: none;
 }
 
 .btn-secondary:hover {
-  background-color: #f9f9f9;
-  border-color: #ccc;
+  background-color: #e0e0e0;
+}
+
+.btn-primary {
+  background-color: #b5838d;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #9c7082;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submitting-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
 }
 
 /* Responsive Adjustments */
-@media (max-width: 600px) {
-  .review-form-container {
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .star-rating {
-    justify-content: center;
-  }
-  
+@media (max-width: 768px) {
   .form-actions {
-    flex-direction: column-reverse;
-    gap: 0.8rem;
+    flex-direction: column;
   }
   
   .btn {

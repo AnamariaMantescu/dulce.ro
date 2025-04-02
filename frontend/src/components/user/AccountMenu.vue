@@ -20,13 +20,13 @@
         
         <ul class="menu-items">
           <li>
-            <router-link to="/account">Contul meu</router-link>
+            <router-link to="/account" @click="menuOpen = false">Contul meu</router-link>
           </li>
           <li>
-            <router-link to="/orders">Comenzile mele</router-link>
+            <router-link to="/orders" @click="menuOpen = false">Comenzile mele</router-link>
           </li>
           <li v-if="isAdmin">
-            <router-link to="/admin">Administrare</router-link>
+            <router-link to="/admin" @click="menuOpen = false">Administrare</router-link>
           </li>
           <li>
             <a href="#" @click.prevent="logout">Deconectare</a>

@@ -146,7 +146,7 @@ export default {
 .user-avatar {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #b5838d, #9c27b0);
+  background:  #b5838d;
   border-radius: 50%;
   display: flex;
   align-items: center;

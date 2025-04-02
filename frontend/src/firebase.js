@@ -1,8 +1,8 @@
 // firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getStorage } from "firebase/storage"; // Adăugăm importul pentru Firebase Storage
 
 const firebaseConfig = {
   apiKey: "AIzaSyCiNr90PpncZHE7MxtmBd9rm2SPesfp8E0",
@@ -18,11 +18,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app); // Inițializăm Firebase Storage
 
 setPersistence(auth, browserLocalPersistence)
   .catch((error) => {
     console.error("Eroare la setarea persistenței:", error);
   });
 
-
-export { db, auth };
+// Exportăm și storage împreună cu db și auth
+export { db, auth, storage };

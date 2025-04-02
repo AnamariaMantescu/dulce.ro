@@ -76,18 +76,18 @@
         </div>
         
         <div class="review-footer">
-          <div class="likes-counter" v-if="review.likes">
+          <!-- <div class="likes-counter" v-if="review.likes">
             <span class="like-icon">👍</span>
             <span>{{ review.likes }} {{ review.likes === 1 ? 'persoană a considerat' : 'persoane au considerat' }} utilă această recenzie</span>
-          </div>
+          </div> -->
           
           <div class="review-actions">
-            <button class="action-btn edit" @click="$emit('edit-review', review)">
+            <!-- <button class="action-btn edit" @click="$emit('edit-review', review)">
               <span class="btn-icon">✏️</span>
               <span class="btn-text">Editează</span>
-            </button>
+            </button> -->
             <button class="action-btn delete" @click="confirmDelete(review.id)">
-              <span class="btn-icon">🗑️</span>
+              <!-- <span class="btn-icon">🗑️</span> -->
               <span class="btn-text">Șterge</span>
             </button>
           </div>
@@ -439,7 +439,6 @@ export default {
 /* Review Footer */
 .review-footer {
   padding: 1.2rem 1.5rem;
-  border-top: 1px solid #f0f0f0;
   display: flex;
   justify-content: space-between;
   align-items: center;

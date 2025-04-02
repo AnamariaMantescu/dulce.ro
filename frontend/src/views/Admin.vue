@@ -59,22 +59,32 @@
         <div v-if="activeTab === 'themes'" class="tab-pane">
           <AdminThemesPanel />
         </div>
+
+        <!-- Tab Comenzi -->
+        <div v-if="activeTab === 'orders'" class="tab-pane">
+          <AdminOrdersPanel 
+            @showNotification="showNotification" 
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+
 import AdminProductsPanel from '@/components/admin/AdminProductsPanel.vue';
 import AdminSpecialDaysPanel from '@/components/admin/AdminSpecialDaysPanel.vue';
 import AdminThemesPanel from '@/components/admin/AdminThemesPanel.vue';
+import AdminOrdersPanel from '@/components/admin/AdminOrdersPanel.vue';
 
 export default {
   name: 'AdminDashboard',
   components: {
     AdminProductsPanel,
     AdminSpecialDaysPanel,
-    AdminThemesPanel
+    AdminThemesPanel,
+    AdminOrdersPanel
   },
   data() {
     return {
@@ -91,6 +101,10 @@ export default {
         {
           label: 'Săptămâni Tematice',
           value: 'themes',
+        },
+        {
+          label: 'Comenzi',
+          value: 'orders',
         }
       ],
       notification: null

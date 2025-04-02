@@ -108,10 +108,12 @@
         
         <div class="order-actions">
           <button class="btn btn-outline" @click="$emit('close')">Închide</button>
+
+          <!-- Find this section in OrderDetailsModal.vue and update it -->
           <button 
             v-if="canReview(order)" 
             class="btn btn-primary" 
-            @click="$emit('add-review', order.id)"
+            @click="emitAddReview(order)"
           >
             Adaugă Recenzie
           </button>
@@ -138,6 +140,49 @@ export default {
     formatOrderId(id) {
       return id ? id.substring(0, 8).toUpperCase() : '';
     },
+// Metodă îmbunătățită pentru OrderDetailsModal.vue
+emitAddReview(order) {
+  // Evităm eventuale erori dacă order este undefined
+  if (!order) {
+    console.error('Comanda nu este disponibilă pentru recenzie');
+    this.$emit('add-review', { orderId: '' });
+    return;
+  }
+
+  // Găsim primul produs pentru recenzie
+  let productId = '';
+  let productData = null;
+  
+  if (order.products && order.products.length > 0) {
+    const product = order.products[0];
+    productId = product.productId || product.id || '';
+    productData = product;
+  } else if (order.items && order.items.length > 0) {
+    const item = order.items[0];
+    productId = item.productId || item.id || '';
+    productData = item;
+  }
+  
+  // Dacă nu avem un ID valid pentru produs, nu îl transmitem deloc
+  // pentru a evita încercarea de a-l căuta în Firestore
+  const eventData = {
+    orderId: order.id
+  };
+  
+  // Adăugăm ID-ul produsului doar dacă există
+  if (productId) {
+    eventData.productId = productId;
+  }
+  
+  // Adăugăm datele produsului dacă există
+  if (productData) {
+    eventData.productData = productData;
+  }
+  
+  // Emitem evenimentul cu toate datele disponibile
+  this.$emit('add-review', eventData);
+  console.log('Emitting add-review event with data:', eventData);
+},
     formatDate(timestamp) {
       if (!timestamp) return 'N/A';
       
