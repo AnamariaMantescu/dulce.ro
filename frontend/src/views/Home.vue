@@ -518,13 +518,13 @@ export default {
   color: #333;
 }
 
-.featured-section {
+/* .featured-section {
   margin: 3rem 0;
-}
-
+} */
+/* 
 .testimonials-wrapper {
   margin: 0 0 3rem 0;
-}
+} */
 
 
 .categories-section {

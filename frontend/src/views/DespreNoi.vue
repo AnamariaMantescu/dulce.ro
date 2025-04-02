@@ -1031,5 +1031,135 @@
       height: 80px;
     }
   }
+
+  /* Enhanced Media Queries for Timeline Section */
+
+@media (max-width: 992px) {
+  .timeline-content {
+    width: 85%;
+  }
+  
+  .timeline:before {
+    left: 30px;
+  }
+  
+  .timeline-icon {
+    left: 30px;
+    transform: translateX(0);
+    width: 70px;
+    height: 70px;
+  }
+  
+  .timeline-item {
+    justify-content: flex-start;
+    padding-left: 80px;
+    margin-bottom: 60px;
+  }
+  
+  .timeline-item:nth-child(even) {
+    justify-content: flex-start;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content:before {
+    right: -10px;
+    left: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .timeline-content {
+    width: calc(100% - 80px);
+    padding: 25px 20px;
+  }
+  
+  .timeline-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .timeline-item {
+    padding-left: 70px;
+    margin-bottom: 50px;
+  }
+  
+  .timeline-content h3 {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+  
+  .timeline-content p {
+    font-size: 1rem;
+  }
+  
+  .timeline-content:before {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .process-section {
+    padding: 60px 0;
+  }
+  
+  .timeline:before {
+    left: 20px;
+  }
+  
+  .timeline-icon {
+    left: 20px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .timeline-item {
+    padding-left: 55px;
+    margin-bottom: 40px;
+  }
+  
+  .timeline-content {
+    width: calc(100% - 60px);
+    padding: 20px 15px;
+  }
+  
+  .timeline-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  
+  .timeline-content p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .timeline-gif {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .timeline-icon {
+    width: 40px;
+    height: 40px;
+    left: 15px;
+  }
+  
+  .timeline-item {
+    padding-left: 45px;
+  }
+  
+  .timeline:before {
+    left: 15px;
+  }
+  
+  .timeline-content {
+    width: calc(100% - 50px);
+    padding: 15px;
+  }
+  
+  .timeline-content h3 {
+    font-size: 1.1rem;
+  }
+}
   </style>
   
