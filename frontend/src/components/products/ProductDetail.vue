@@ -819,32 +819,31 @@ export default {
     height: 20px;
   }
 }
-/* Mobile Cart Design - Clean & Modern */
+/* Slim & Compact Mobile Cart Design */
 
 @media (max-width: 767px) {
-  /* Product actions container */
+  /* Product actions container - more compact */
   .product-actions {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin: 24px 0;
+    gap: 12px;
+    margin: 16px 0;
   }
   
-  /* Quantity selector - Clean, elegant design */
+  /* Slimmer quantity selector */
   .quantity-selector {
     display: flex;
     width: 100%;
-    height: 46px;
-    border-radius: 6px;
+    height: 38px;
+    border-radius: 4px;
     border: 1px solid #e5e5e5;
     overflow: hidden;
     background: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
   
   .quantity-btn {
-    width: 46px;
-    height: 46px;
+    width: 38px;
+    height: 38px;
     background-color: #fafafa;
     border: none;
     color: #333;
@@ -855,14 +854,14 @@ export default {
   }
   
   .quantity-symbol {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     line-height: 1;
   }
   
   .quantity-input {
     flex: 1;
-    height: 46px;
-    font-size: 1rem;
+    height: 38px;
+    font-size: 0.95rem;
     font-weight: 500;
     text-align: center;
     border: none;
@@ -872,12 +871,12 @@ export default {
     color: #333;
   }
   
-  /* Add to cart button - Bold, prominent */
+  /* Slimmer add to cart button */
   .add-to-cart-btn {
     width: 100%;
-    height: 50px;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    height: 42px;
+    border-radius: 4px;
+    font-size: 0.85rem;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -888,17 +887,15 @@ export default {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .add-to-cart-btn:active {
     background-color: #111;
-    transform: translateY(1px);
   }
   
   .add-to-cart-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   
   /* Hide spinner on number input */
