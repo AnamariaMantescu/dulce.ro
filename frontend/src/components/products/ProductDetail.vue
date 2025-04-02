@@ -761,124 +761,105 @@ export default {
 /* Modify the existing media query for mobile devices */
 @media (max-width: 480px) {
   .product-actions {
-    flex-direction: column;
-    gap: 1rem;
-    margin: 1.5rem 0;
+    /* Keep the same horizontal layout */
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
   
   .quantity-selector {
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    /* Same elegant styling */
+    height: 34px;
+    min-width: unset; /* Remove any minimum width constraints */
   }
   
   .quantity-btn {
-    width: 40px;
-    height: 48px;
-    background-color: #f8f8f8;
-    font-weight: bold;
-    transition: all 0.2s ease;
-  }
-  
-  .quantity-btn:active {
-    background-color: #e0e0e0;
-    transform: scale(0.95);
-  }
-  
-  .quantity-symbol {
-    font-size: 1.6rem;
+    width: 28px;
+    height: 34px;
   }
   
   .quantity-input {
-    width: 60px;
-    height: 48px;
-    font-size: 1.2rem;
-    font-weight: 500;
+    width: 34px;
+    height: 34px;
   }
   
   .add-to-cart-btn {
-    width: 100%;
-    height: 54px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .add-to-cart-btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .add-to-cart-btn svg {
-    width: 20px;
-    height: 20px;
+    height: 34px;
+    /* Ensure text doesn't wrap */
+    white-space: nowrap;
   }
 }
-/* Slim & Compact Mobile Cart Design */
 
-@media (max-width: 767px) {
-  /* Product actions container - more compact */
-  .product-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 16px 0;
+/* For very small screens - adjustments that maintain elegance */
+@media (max-width: 359px) {
+  .quantity-selector {
+    flex: 0 0 auto; /* Don't allow the selector to grow */
   }
   
-  /* Slimmer quantity selector */
+  .add-to-cart-btn {
+    padding: 0 10px; /* Slightly reduce padding */
+  }
+}
+/* Minimalist Elegant Cart Design */
+
+@media (max-width: 767px) {
+  /* Product actions - clean horizontal layout */
+  .product-actions {
+    display: flex;
+    gap: 10px;
+    margin: 14px 0;
+    align-items: center;
+  }
+  
+  /* Minimalist quantity selector */
   .quantity-selector {
     display: flex;
-    width: 100%;
-    height: 38px;
-    border-radius: 4px;
+    align-items: center;
+    height: 34px;
     border: 1px solid #e5e5e5;
+    border-radius: 5px;
     overflow: hidden;
-    background: white;
+    background-color: white;
   }
   
   .quantity-btn {
-    width: 38px;
-    height: 38px;
-    background-color: #fafafa;
+    width: 28px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
     border: none;
-    color: #333;
-  }
-  
-  .quantity-btn:active {
-    background-color: #f0f0f0;
+    color: #777;
+    font-weight: normal;
+    padding: 0;
   }
   
   .quantity-symbol {
-    font-size: 1.2rem;
-    line-height: 1;
+    font-size: 0.9rem;
   }
   
   .quantity-input {
-    flex: 1;
-    height: 38px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    text-align: center;
+    width: 34px;
+    height: 34px;
     border: none;
-    border-left: 1px solid #eee;
-    border-right: 1px solid #eee;
-    background: white;
+    border-left: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    text-align: center;
+    font-size: 0.85rem;
     color: #333;
+    padding: 0;
+    background-color: white;
   }
   
-  /* Slimmer add to cart button */
+  /* Refined add to cart button */
   .add-to-cart-btn {
-    width: 100%;
-    height: 42px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    flex: 1;
+    height: 34px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
     text-transform: uppercase;
     background-color: #222;
     color: white;
@@ -886,16 +867,13 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-  }
-  
-  .add-to-cart-btn:active {
-    background-color: #111;
+    gap: 5px;
+    padding: 0 12px;
   }
   
   .add-to-cart-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
   
   /* Hide spinner on number input */
@@ -910,15 +888,5 @@ export default {
   }
 }
 
-/* Adding a specific style for even smaller screens */
-@media (max-width: 360px) {
-  .product-actions {
-    margin: 1rem 0;
-  }
-  
-  .add-to-cart-btn {
-    font-size: 0.9rem;
-    height: 50px;
-  }
-}
+
 </style>
