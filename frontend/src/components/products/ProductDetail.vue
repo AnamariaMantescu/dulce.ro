@@ -819,6 +819,99 @@ export default {
     height: 20px;
   }
 }
+/* Mobile Cart Design - Clean & Modern */
+
+@media (max-width: 767px) {
+  /* Product actions container */
+  .product-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  
+  /* Quantity selector - Clean, elegant design */
+  .quantity-selector {
+    display: flex;
+    width: 100%;
+    height: 46px;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .quantity-btn {
+    width: 46px;
+    height: 46px;
+    background-color: #fafafa;
+    border: none;
+    color: #333;
+  }
+  
+  .quantity-btn:active {
+    background-color: #f0f0f0;
+  }
+  
+  .quantity-symbol {
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+  
+  .quantity-input {
+    flex: 1;
+    height: 46px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    border: none;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
+    background: white;
+    color: #333;
+  }
+  
+  /* Add to cart button - Bold, prominent */
+  .add-to-cart-btn {
+    width: 100%;
+    height: 50px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background-color: #222;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .add-to-cart-btn:active {
+    background-color: #111;
+    transform: translateY(1px);
+  }
+  
+  .add-to-cart-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Hide spinner on number input */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
 
 /* Adding a specific style for even smaller screens */
 @media (max-width: 360px) {
