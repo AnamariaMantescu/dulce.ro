@@ -756,35 +756,79 @@ export default {
   }
 }
 
+/* Enhanced Mobile Cart Styling */
+
+/* Modify the existing media query for mobile devices */
 @media (max-width: 480px) {
-  .product-detail-container {
-    padding: 0 1rem;
-    margin: 1.5rem auto;
-  }
-  
   .product-actions {
     flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
   }
   
   .quantity-selector {
     width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .quantity-btn {
+    width: 40px;
+    height: 48px;
+    background-color: #f8f8f8;
+    font-weight: bold;
+    transition: all 0.2s ease;
+  }
+  
+  .quantity-btn:active {
+    background-color: #e0e0e0;
+    transform: scale(0.95);
+  }
+  
+  .quantity-symbol {
+    font-size: 1.6rem;
+  }
+  
+  .quantity-input {
+    width: 60px;
+    height: 48px;
+    font-size: 1.2rem;
+    font-weight: 500;
   }
   
   .add-to-cart-btn {
     width: 100%;
+    height: 54px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
   }
   
-  .tab-button {
-    padding: 0.8rem 1.2rem;
-    font-size: 0.75rem;
+  .add-to-cart-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
   
-  .details-content {
-    padding: 1.5rem 1rem;
+  .add-to-cart-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Adding a specific style for even smaller screens */
+@media (max-width: 360px) {
+  .product-actions {
+    margin: 1rem 0;
   }
   
-  .product-title {
-    font-size: 1.6rem;
+  .add-to-cart-btn {
+    font-size: 0.9rem;
+    height: 50px;
   }
 }
 </style>
