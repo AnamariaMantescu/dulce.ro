@@ -492,6 +492,7 @@ async loadSpecialDayProducts() {
   justify-content: center;
   margin-bottom: 5rem;
 }
+
 .hero-overlay {
   position: absolute;
   top: 0;
@@ -508,11 +509,12 @@ async loadSpecialDayProducts() {
   text-align: center;
   color: #fff;
   max-width: 900px;
-  padding: 0 2rem;
+  padding: 2rem;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 .back-link {
   align-self: flex-start;
@@ -553,6 +555,9 @@ async loadSpecialDayProducts() {
   margin-bottom: 1.2rem;
   text-shadow: 0 2px 5px rgba(0,0,0,0.2);
   font-family: 'Cormorant Garamond', serif;
+  width: 100%;
+  padding: 0 10px;
+  word-wrap: break-word;
 }
 .hero-content .hero-description {
   font-size: 1.3rem;
@@ -877,6 +882,518 @@ async loadSpecialDayProducts() {
   }
   .themes-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Enhanced Media Queries for Hero Section */
+
+/* Large screens (desktops) */
+@media (min-width: 1200px) {
+  .video-header {
+    height: 85vh;
+  }
+  
+  .main-title {
+    font-size: 5.5rem;
+    letter-spacing: 8px;
+  }
+  
+  .tagline {
+    font-size: 1.6rem;
+  }
+}
+
+/* Medium screens (laptops, small desktops) */
+@media (max-width: 1199px) {
+  .video-header {
+    height: 80vh;
+  }
+  
+  .main-title {
+    font-size: 4.5rem;
+    letter-spacing: 6px;
+  }
+  
+  .tagline {
+    font-size: 1.5rem;
+  }
+}
+
+/* Tablets and small laptops */
+@media (max-width: 992px) {
+  .video-header {
+    height: 75vh;
+    background-attachment: scroll; /* Fix for iOS */
+  }
+  
+  .main-title {
+    font-size: 4rem;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .tagline {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+  }
+  
+  .header-content {
+    max-width: 700px;
+  }
+}
+
+/* Tablets (portrait) and large phones */
+@media (max-width: 768px) {
+  .video-header {
+    height: 70vh;
+  }
+  
+  .main-title {
+    font-size: 3.2rem;
+    letter-spacing: 4px;
+    margin-bottom: 12px;
+  }
+  
+  .tagline {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+  
+  .header-content {
+    max-width: 550px;
+  }
+}
+
+/* Medium-sized phones */
+@media (max-width: 576px) {
+  .video-header {
+    height: 60vh;
+  }
+  
+  .main-title {
+    font-size: 2.6rem;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+  }
+  
+  .tagline {
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+    padding: 0 10px;
+  }
+  
+  .header-content {
+    width: 90%;
+  }
+  
+  .overlay {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.45) 100%);
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .video-header {
+    height: 50vh;
+  }
+  
+  .main-title {
+    font-size: 2.2rem;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  
+  .tagline {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    line-height: 1.4;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .video-header {
+    height: 45vh;
+    min-height: 300px;
+  }
+  
+  .main-title {
+    font-size: 1.8rem;
+    letter-spacing: 1.5px;
+  }
+  
+  .tagline {
+    font-size: 0.9rem;
+    padding: 0 5px;
+  }
+}
+
+/* Height-based media queries for short screens */
+@media (max-height: 600px) {
+  .video-header {
+    height: auto;
+    min-height: 350px;
+    padding: 50px 0;
+  }
+}
+
+/* Ensure background image displays correctly */
+@media (max-width: 768px) {
+  .video-header {
+    background-position: center center;
+    background-size: cover;
+  }
+}
+@media (max-width: 992px) {
+  .page-hero {
+    height: auto;
+    min-height: 500px;
+    padding: 80px 0;
+  }
+  
+  .hero-content {
+    padding: 2rem 1.5rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 3.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-description {
+    font-size: 1.2rem !important;
+  }
+  
+  .hero-cta {
+    gap: 1.2rem;
+  }
+  
+  .hero-cta :deep(.countdown-container) {
+    padding: 1.5rem;
+  }
+}
+
+/* Tablets (portrait) and large phones */
+@media (max-width: 768px) {
+  .page-hero {
+    min-height: 450px;
+    padding: 70px 0;
+    margin-bottom: 3rem;
+  }
+  
+  .hero-content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 2.8rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.8rem;
+  }
+  
+  .hero-description {
+    font-size: 1.1rem !important;
+    max-width: 500px;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .back-link {
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .hero-content .theme-badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .hero-cta {
+    gap: 1rem;
+  }
+  
+  .hero-cta :deep(.countdown-container) {
+    padding: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .theme-date-range {
+    padding: 0.8rem 1.5rem;
+  }
+  
+  .discount-badge {
+    padding: 0.7rem 1.2rem;
+  }
+}
+
+/* Medium-sized phones */
+@media (max-width: 576px) {
+  .page-hero {
+    min-height: auto; /* Remove fixed height */
+    padding: 60px 0;
+    margin-bottom: 2.5rem;
+  }
+  
+  .hero-content {
+    padding: 1rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.7rem;
+    word-break: break-word;
+    hyphens: auto;
+    width: 100%;
+  }
+  
+  .hero-description {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .back-link {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .hero-content .theme-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .hero-cta {
+    width: 100%;
+    gap: 0.8rem;
+  }
+  
+  .hero-cta :deep(.countdown-container) {
+    padding: 1rem;
+    width: 100%;
+  }
+  
+  .theme-date-range {
+    width: 100%;
+    padding: 0.7rem 1rem;
+  }
+  
+  .discount-badge {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .page-hero {
+    padding: 50px 0;
+    margin-bottom: 2rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0;
+    margin-bottom: 0.6rem;
+  }
+  
+  .hero-description {
+    font-size: 0.9rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .back-link {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.7rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-content .theme-badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+  
+  .hero-cta {
+    gap: 0.7rem;
+  }
+  
+  .hero-cta :deep(.countdown-container) {
+    padding: 0.8rem;
+  }
+  
+  .hero-cta :deep(.countdown-title) {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-cta :deep(.time-value) {
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .theme-date-range {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .discount-badge {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .page-hero {
+    padding: 40px 0;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.6rem;
+  }
+  
+  .hero-description {
+    font-size: 0.85rem !important;
+  }
+  
+  .hero-cta :deep(.time-value) {
+    width: 35px;
+    height: 35px;
+    font-size: 1.1rem;
+  }
+  
+  .hero-cta :deep(.time-label) {
+    font-size: 0.6rem;
+  }
+}
+/* Inline Countdown Timer Styling */
+
+/* Main container */
+.countdown-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Countdown title */
+.countdown-title {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+  color: #fff;
+  font-weight: 400;
+}
+
+/* Timer units container - horizontal layout */
+.countdown-units {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Each time unit block - horizontal */
+.time-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+}
+
+/* The actual number display */
+.time-value {
+  font-size: 2rem;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #333;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+/* Time unit label */
+.time-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  font-weight: 400;
+}
+
+/* Separator between time units */
+.time-separator {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0 5px;
+  padding-bottom: 25px; /* Move down to align with numbers */
+  opacity: 0.8;
+}
+
+/* Responsive styles */
+@media (max-width: 576px) {
+  .countdown-container {
+    padding: 1.2rem;
+  }
+  
+  .time-value {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .countdown-title {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .time-label {
+    font-size: 0.7rem;
+  }
+  
+  .time-separator {
+    font-size: 1.2rem;
+    margin: 0 2px;
+  }
+}
+
+@media (max-width: 400px) {
+  .countdown-container {
+    padding: 1rem 0.8rem;
+  }
+  
+  .time-value {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+  }
+  
+  .time-unit {
+    padding: 0 5px;
+  }
+  
+  .time-label {
+    font-size: 0.65rem;
+  }
+  
+  .time-separator {
+    font-size: 1rem;
+    padding-bottom: 22px;
   }
 }
 </style>

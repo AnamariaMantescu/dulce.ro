@@ -88,17 +88,21 @@ export default {
 
 <style scoped>
 .countdown-container {
-  padding: 2.5rem;
+  padding: 1.5rem;
   text-align: center;
   font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .countdown-title {
-  margin-bottom: 2rem;
-  font-size: 1.4rem;
-  /* color: #333; */
-  font-weight: 300;
-  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   font-family: 'Montserrat', sans-serif;
 }
@@ -107,98 +111,125 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .time-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 80px;
+  padding: 0 5px;
 }
 
 .time-value {
-  font-size: 2.4rem;
-  font-weight: 300;
-  color: #333;
-  padding: 0.8rem 0;
-  width: 80px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  position: relative;
-  background-color: white;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  font-size: 2.2rem;
+  font-weight: 400;
+  padding: 0.5rem 0;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  color: black;
 }
 
-.time-value::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
-}
 
-.time-block:hover .time-value {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
 
 .time-label {
-  margin-top: 0.8rem;
-  font-size: 0.9rem;
-  /* color: #666; */
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
   letter-spacing: 1px;
   text-transform: uppercase;
-  font-weight: 300;
+  font-weight: 400;
   font-family: 'Montserrat', sans-serif;
 }
 
 .time-separator {
-  font-size: 2.4rem;
+  font-size: 2rem;
   font-weight: 300;
-  margin: 0 0.8rem;
-  color: #333;
-  padding-bottom: 30px;
+  margin: 0 4px;
+  padding-bottom: 25px;
+  opacity: 0.8;
 }
 
+/* Keep timer inline at all sizes but adjust dimensions */
 @media (max-width: 768px) {
-  .time-value {
-    font-size: 2rem;
-    width: 70px;
+  .countdown-container {
+    padding: 1.2rem;
   }
   
-  .time-block {
-    min-width: 70px;
+  .time-value {
+    font-size: 1.8rem;
+    width: 60px;
+    height: 60px;
   }
   
   .time-separator {
-    font-size: 2rem;
-    margin: 0 0.4rem;
+    font-size: 1.8rem;
+    margin: 0 2px;
+    padding-bottom: 20px;
   }
   
   .countdown-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .time-label {
+    font-size: 0.75rem;
   }
 }
 
-@media (max-width: 480px) {
-  .countdown-timer {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+@media (max-width: 576px) {
+  .countdown-container {
+    padding: 1rem;
+  }
+  
+  .time-value {
+    font-size: 1.5rem;
+    width: 50px;
+    height: 50px;
   }
   
   .time-block {
-    margin: 0;
+    padding: 0 2px;
   }
   
   .time-separator {
-    display: none;
+    font-size: 1.5rem;
+    margin: 0 1px;
+    padding-bottom: 16px;
   }
   
-  .countdown-container {
-    padding: 2rem 1rem;
+  .time-label {
+    font-size: 0.7rem;
+    margin-top: 0.4rem;
+  }
+  
+  .countdown-title {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .time-value {
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .time-label {
+    font-size: 0.6rem;
+  }
+  
+  .time-separator {
+    font-size: 1.2rem;
+    padding-bottom: 12px;
   }
 }
 </style>
