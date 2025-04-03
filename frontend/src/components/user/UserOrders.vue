@@ -1,6 +1,4 @@
 <!-- components/user/UserOrders.vue -->
-
-<!-- components/user/UserOrders.vue -->
 <template>
   <div class="orders-container">
     <h2 class="section-title">Comenzile Mele</h2>
@@ -81,6 +79,11 @@
               <span class="btn-text">Detalii</span>
             </button>
             
+            <button class="action-btn invoice" @click="$emit('generate-invoice', order)">
+              <span class="btn-icon">📄</span>
+              <span class="btn-text">Generează factură</span>
+            </button>
+            
             <button class="action-btn track" v-if="canTrack(order.info)">
               <span class="btn-icon">🚚</span>
               <span class="btn-text">Urmărire</span>
@@ -99,7 +102,6 @@
     </div>
   </div>
 </template>
-
 <script>
 export default {
   name: 'UserOrders',
@@ -243,18 +245,15 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 /* Styles remain unchanged */
 .orders-container {
   animation: fadeIn 0.5s ease-out;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 .section-title {
   font-family: 'Cormorant Garamond', 'Playfair Display', serif;
   font-size: 1.8rem;
@@ -264,7 +263,6 @@ export default {
   position: relative;
   padding-bottom: 0.8rem;
 }
-
 .section-title:after {
   content: '';
   position: absolute;
@@ -275,11 +273,9 @@ export default {
   background-color: #b5838d;
   transition: width 0.3s ease;
 }
-
 .orders-container:hover .section-title:after {
   width: 60px;
 }
-
 /* Loading State */
 .loading-state {
   display: flex;
@@ -289,7 +285,6 @@ export default {
   min-height: 200px;
   padding: 2rem;
 }
-
 .loader {
   width: 48px;
   height: 48px;
@@ -299,12 +294,10 @@ export default {
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 /* Empty State */
 .empty-state {
   display: flex;
@@ -317,26 +310,22 @@ export default {
   background-color: #f9f9f9;
   border-radius: 12px;
 }
-
 .empty-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
   color: #ccc;
 }
-
 .empty-state h3 {
   font-family: 'Cormorant Garamond', 'Playfair Display', serif;
   font-size: 1.5rem;
   margin-bottom: 1rem;
   color: #666;
 }
-
 .empty-state p {
   margin-bottom: 1.5rem;
   color: #888;
   max-width: 400px;
 }
-
 .browse-btn {
   background: linear-gradient(to right, #b5838d, #9c27b0);
   color: white;
@@ -349,19 +338,16 @@ export default {
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(181, 131, 141, 0.3);
 }
-
 .browse-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 7px 20px rgba(181, 131, 141, 0.4);
 }
-
 /* Orders List */
 .orders-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
-
 .order-card {
   background-color: white;
   border-radius: 12px;
@@ -370,12 +356,10 @@ export default {
   transition: all 0.3s ease;
   border: 1px solid #f0f0f0;
 }
-
 .order-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
-
 /* Order Header */
 .order-header {
   padding: 1.2rem 1.5rem;
@@ -385,24 +369,20 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
-
 .order-info {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
-
 .order-number {
   font-weight: 600;
   color: #333;
   font-size: 1.1rem;
 }
-
 .order-date {
   font-size: 0.85rem;
   color: #777;
 }
-
 /* Order Status */
 .order-status {
   padding: 0.5rem 1rem;
@@ -411,43 +391,36 @@ export default {
   font-weight: 500;
   letter-spacing: 0.5px;
 }
-
 .status-new {
   background-color: rgba(250, 219, 216, 0.2);
   color: #e84b3c;
   border: 1px solid rgba(250, 219, 216, 0.5);
 }
-
 .status-processing {
   background-color: rgba(255, 243, 224, 0.2);
   color: #f39c12;
   border: 1px solid rgba(255, 243, 224, 0.5);
 }
-
 .status-shipped {
   background-color: rgba(209, 236, 241, 0.2);
   color: #3498db;
   border: 1px solid rgba(209, 236, 241, 0.5);
 }
-
 .status-delivered {
   background-color: rgba(212, 239, 223, 0.2);
   color: #27ae60;
   border: 1px solid rgba(212, 239, 223, 0.5);
 }
-
 .status-cancelled {
   background-color: rgba(235, 237, 239, 0.2);
   color: #7f8c8d;
   border: 1px solid rgba(235, 237, 239, 0.5);
 }
-
 .status-default {
   background-color: rgba(236, 240, 241, 0.2);
   color: #95a5a6;
   border: 1px solid rgba(236, 240, 241, 0.5);
 }
-
 /* Order Content */
 .order-content {
   padding: 1.5rem;
@@ -457,29 +430,24 @@ export default {
   gap: 1.5rem;
   border-bottom: 1px solid #f0f0f0;
 }
-
 .order-details {
   flex: 1;
   min-width: 280px;
 }
-
 .detail-group {
   margin-bottom: 0.8rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 .detail-label {
   font-weight: 500;
   color: #666;
   min-width: 100px;
 }
-
 .detail-value {
   color: #333;
 }
-
 /* Payment Info */
 .payment-info {
   display: flex;
@@ -488,7 +456,6 @@ export default {
   gap: 1rem;
   min-width: 200px;
 }
-
 .payment-status {
   display: flex;
   align-items: center;
@@ -496,60 +463,48 @@ export default {
   font-weight: 500;
   font-size: 0.95rem;
 }
-
 .payment-paid {
   color: #27ae60;
 }
-
 .payment-unpaid {
   color: #e74c3c;
 }
-
 .payment-pending {
   color: #f39c12;
 }
-
 .payment-failed {
   color: #c0392b;
 }
-
 .payment-unknown {
   color: #7f8c8d;
 }
-
 .status-icon {
   font-size: 1.2rem;
 }
-
 .order-total {
   font-size: 1.2rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-
 .total-label {
   font-weight: 500;
   color: #666;
 }
-
 .total-value {
   font-weight: 600;
   color: #b5838d;
 }
-
 /* Order Footer */
 .order-footer {
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: flex-end;
 }
-
 .order-actions {
   display: flex;
   gap: 0.8rem;
 }
-
 .action-btn {
   display: flex;
   align-items: center;
@@ -561,38 +516,37 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 .action-btn.view {
   background-color: #f5f5f5;
   color: #666;
 }
-
 .action-btn.view:hover {
   background-color: #e9e9e9;
 }
-
+.action-btn.invoice {
+  background-color: rgba(241, 196, 15, 0.1);
+  color: #f1c40f;
+}
+.action-btn.invoice:hover {
+  background-color: rgba(241, 196, 15, 0.2);
+}
 .action-btn.track {
   background-color: rgba(52, 152, 219, 0.1);
   color: #3498db;
 }
-
 .action-btn.track:hover {
   background-color: rgba(52, 152, 219, 0.2);
 }
-
 .action-btn.review {
   background-color: rgba(181, 131, 141, 0.1);
   color: #b5838d;
 }
-
 .action-btn.review:hover {
   background-color: rgba(181, 131, 141, 0.2);
 }
-
 .btn-icon {
   font-size: 1.1rem;
 }
-
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .order-content {
@@ -611,7 +565,6 @@ export default {
     justify-content: center;
   }
 }
-
 @media (max-width: 480px) {
   .order-header {
     flex-direction: column;
