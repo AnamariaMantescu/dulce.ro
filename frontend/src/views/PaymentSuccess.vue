@@ -97,7 +97,7 @@ export default {
         const userId = this.isAuthenticated ? this.currentUser.uid : null;
         
         // Save the order with cart items and user ID
-        const response = await axios.post('http://localhost:5001/api/payment/save-order', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/save-order`, {
           sessionId: this.sessionId,
           cartItems: this.localCartItems,
           customCake: this.customCake,
