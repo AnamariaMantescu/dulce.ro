@@ -326,10 +326,10 @@ export default {
         `${item.totalBeforeTax.toFixed(2)} RON`
       ]);
 
-      doc.autoTable({
-        startY: 105,
-        head: headers,
-        body: items,
+      autoTable(doc, {
+  startY: 105,
+  head: headers,
+  body: items,
         theme: 'grid',
         headStyles: {
           fillColor: [181, 131, 141],
