@@ -1,7 +1,7 @@
 // client/src/services/api.js
 import axios from 'axios'
 
-const API_URL = 'https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app/api'
+const API_URL = 'https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app'
 
 export default {
   // Produse
