@@ -113,8 +113,11 @@
 </template>
 
 <script>
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+// Attach autoTable to jsPDF
+jsPDF.API.autoTable = autoTable;
 
 export default {
   name: 'UserOrders',
@@ -152,18 +155,14 @@ export default {
     },
     formatDate(timestamp) {
       if (!timestamp) return 'N/A';
-      
-      // Check if timestamp is a Firebase Timestamp object
       if (timestamp.toDate && typeof timestamp.toDate === 'function') {
         timestamp = timestamp.toDate();
       } else if (typeof timestamp === 'string') {
         timestamp = new Date(timestamp);
       }
-      
-      // Format date as DD Month YYYY at HH:MM
-      const options = { 
-        day: 'numeric', 
-        month: 'long', 
+      const options = {
+        day: 'numeric',
+        month: 'long',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -172,7 +171,6 @@ export default {
     },
     formatPrice(amount) {
       if (!amount && amount !== 0) return 'N/A';
-      
       return new Intl.NumberFormat('ro-RO', {
         style: 'currency',
         currency: 'RON',
@@ -181,7 +179,6 @@ export default {
     },
     formatAddress(address) {
       if (!address) return 'N/A';
-      
       const parts = [];
       if (address.line1) parts.push(address.line1);
       if (address.line2) parts.push(address.line2);
@@ -189,83 +186,67 @@ export default {
       if (address.state) parts.push(address.state);
       if (address.postal_code) parts.push(address.postal_code);
       if (address.country) parts.push(address.country);
-      
       return parts.join(', ');
     },
     getStatusClass(status) {
       if (!status) return 'status-default';
-      
       const statusMap = {
         'în pregătire': 'status-processing',
         'la livrare': 'status-shipped',
         'livrat': 'status-delivered'
       };
-      
-      // Default to the original status if not found in the map
       return statusMap[status.toLowerCase()] || 'status-default';
     },
     getStatusText(status) {
       if (!status) return 'Necunoscut';
-      
       const statusMap = {
         'în pregătire': 'În pregătire',
         'la livrare': 'La livrare',
         'livrat': 'Livrat'
       };
-      
-      // Return the mapped status or the original status
       return statusMap[status.toLowerCase()] || status;
     },
     getPaymentStatusClass(status) {
       if (!status) return 'payment-unknown';
-      
       const statusMap = {
         'paid': 'payment-paid',
         'unpaid': 'payment-unpaid',
         'pending': 'payment-pending',
         'failed': 'payment-failed'
       };
-      
       return statusMap[status.toLowerCase()] || 'payment-unknown';
     },
     getPaymentStatusText(status) {
       if (!status) return 'Necunoscut';
-      
       const statusMap = {
         'paid': 'Plătită',
         'unpaid': 'Neplătită',
         'pending': 'În așteptare',
         'failed': 'Eșuată'
       };
-      
       return statusMap[status.toLowerCase()] || status;
     },
     getPaymentStatusIcon(status) {
       if (!status) return '❓';
-      
       const iconMap = {
         'paid': '✅',
         'unpaid': '❌',
         'pending': '⏳',
         'failed': '❗'
       };
-      
       return iconMap[status.toLowerCase()] || '❓';
     },
     canTrack(status) {
       return status && ['la livrare'].includes(status.toLowerCase());
     },
     canReview(order) {
-      // Check if the order is delivered and contains products
-      return order && 
-             order.info && 
-             (order.info.toLowerCase() === 'livrat' || 
-              order.info.toLowerCase() === 'în pregătire') && // Temporarily include 'în pregătire' for testing
-             ((order.products && order.products.length > 0) || 
-              (order.items && order.items.length > 0));
+      return order &&
+        order.info &&
+        (order.info.toLowerCase() === 'livrat' || order.info.toLowerCase() === 'în pregătire') &&
+        ((order.products && order.products.length > 0) ||
+         (order.items && order.items.length > 0));
     },
     getFirstProductId(order) {
-      // Get first product ID from either products or items array
       if (order.products && order.products.length > 0) {
         return order.products[0].productId || '';
       } else if (order.items && order.items.length > 0) {
@@ -273,29 +254,17 @@ export default {
       }
       return '';
     },
-    
-    /**
-     * PDF Generation Methods
-     */
     generateInvoice(order) {
       try {
-        // Create new PDF document with Romanian font support
         const doc = new jsPDF();
-        
-        // Set document properties
         doc.setFont('helvetica');
-        doc.setFontSize(10);
-        
-        // Add title
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('FACTURĂ', 105, 20, { align: 'center' });
-        
-        // Generate invoice number
+
         const invoiceNumber = `INV-${this.formatOrderId(order.id)}-${new Date().getFullYear()}`;
         const currentDate = this.formatInvoiceDate(new Date());
-        
-        // Add company info - left side
+
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text('Emitent:', 14, 40);
@@ -307,71 +276,48 @@ export default {
         doc.text(`CUI: ${this.companyInfo.cui}`, 14, 60);
         doc.text(`Tel: ${this.companyInfo.phone}`, 14, 65);
         doc.text(`Email: ${this.companyInfo.email}`, 14, 70);
-        
-        // Add invoice info - right side
+
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text(`Număr factură: ${invoiceNumber}`, 140, 40);
         doc.text(`Data emitere: ${currentDate}`, 140, 45);
-        
-        // Add client info
+
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text('Client:', 14, 85);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        
-        // Check if customer details exist
+
         if (order.customerDetails) {
           doc.text(order.customerDetails.name || 'N/A', 14, 90);
           doc.text(this.formatAddress(order.customerDetails.address) || 'N/A', 14, 95);
         } else {
           doc.text('Informații client indisponibile', 14, 90);
         }
-        
-        // Add products table
+
         this.addProductsTable(doc, order);
-        
-        // Add payment method
+
         doc.setFontSize(10);
         doc.text(`Metoda de plată: ${this.getPaymentMethod(order.paymentMethod)}`, 14, doc.lastAutoTable.finalY + 20);
-        
-        // Add terms and conditions
         doc.text('Termeni și condiții: Produsele nu pot fi returnate.', 14, doc.lastAutoTable.finalY + 25);
-        
-        // Add footer
+
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
           doc.setPage(i);
           doc.setFontSize(8);
-          doc.text(
-            `${this.companyInfo.name} - Pagina ${i} din ${pageCount}`,
-            105,
-            doc.internal.pageSize.height - 10,
-            { align: 'center' }
-          );
+          doc.text(`${this.companyInfo.name} - Pagina ${i} din ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
         }
-        
-        // Save the PDF
+
         doc.save(`Factura_${invoiceNumber}.pdf`);
-        
-        // Show success notification
         this.showNotification(`Factura ${invoiceNumber} a fost generată cu succes!`, 'success');
-        
         return invoiceNumber;
       } catch (error) {
         console.error('Error generating invoice:', error);
         this.showNotification('A apărut o eroare la generarea facturii.', 'error');
       }
     },
-    
     addProductsTable(doc, order) {
-      // Define the table headers
-      const headers = [
-        ['Nr. crt.', 'Descriere', 'Cantitate', 'Preț unitar (fără TVA)', 'Total (fără TVA)']
-      ];
-      
-      // Format the items data
+      const headers = [['Nr. crt.', 'Descriere', 'Cantitate', 'Preț unitar (fără TVA)', 'Total (fără TVA)']];
       const items = this.getOrderItems(order).map((item, index) => [
         index + 1,
         item.name,
@@ -379,8 +325,7 @@ export default {
         `${item.unitPrice.toFixed(2)} RON/${item.unit}`,
         `${item.totalBeforeTax.toFixed(2)} RON`
       ]);
-      
-      // Add the table to the document
+
       doc.autoTable({
         startY: 105,
         head: headers,
@@ -393,17 +338,15 @@ export default {
         },
         styles: {
           fontSize: 9,
-          cellPadding: 3,
+          cellPadding: 3
         },
         margin: { top: 105 }
       });
-      
-      // Calculate totals
+
       const totalBeforeTax = this.calculateTotalBeforeTax(order);
       const taxAmount = this.calculateTax(totalBeforeTax);
       const totalAmount = totalBeforeTax + taxAmount;
-      
-      // Add totals to the table
+
       doc.autoTable({
         startY: doc.lastAutoTable.finalY + 2,
         body: [
@@ -414,33 +357,19 @@ export default {
         theme: 'grid',
         styles: {
           fontSize: 9,
-          cellPadding: 3,
+          cellPadding: 3
         },
         bodyStyles: {
           fillColor: [245, 245, 245]
         },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 60 },
-          2: { cellWidth: 30 },
-          3: { fontStyle: 'bold' },
-          4: { fontStyle: 'bold' }
-        },
         margin: { left: 14 }
       });
     },
-    
     getOrderItems(order) {
-      // Use either products or items array from the order
       const orderItems = order.products || order.items || [];
-      
       return orderItems.map(item => {
-        // Determine unit of measurement based on product type
         const unit = this.getUnitByProductType(item.productType || 'piece');
-        
-        // Calculate price without VAT (assuming 9% VAT)
         const unitPriceWithoutVAT = (item.price || 0) / 1.09;
-        
         return {
           name: item.name || item.productName || 'Produs necunoscut',
           quantity: item.quantity || 1,
@@ -450,28 +379,22 @@ export default {
         };
       });
     },
-    
     calculateTotalBeforeTax(order) {
       const items = this.getOrderItems(order);
       return items.reduce((total, item) => total + item.totalBeforeTax, 0);
     },
-    
     calculateTax(amount) {
       return amount * 0.09;
     },
-    
     getPaymentMethod(method) {
       if (!method) return 'Card bancar';
-      
       const methodMap = {
         'card': 'Card bancar',
         'cash': 'Numerar la livrare',
         'bank_transfer': 'Transfer bancar'
       };
-      
       return methodMap[method.toLowerCase()] || method;
     },
-    
     getUnitByProductType(type) {
       const unitMap = {
         'cake': 'kg',
@@ -480,41 +403,34 @@ export default {
         'drink': 'ml',
         'box': 'buc'
       };
-      
       return unitMap[type.toLowerCase()] || 'buc';
     },
-    
     formatInvoiceDate(date) {
       if (!date) return 'N/A';
-      
-      const options = { 
-        day: 'numeric', 
-        month: 'long', 
+      const options = {
+        day: 'numeric',
+        month: 'long',
         year: 'numeric'
       };
-      
       return date.toLocaleDateString('ro-RO', options);
     },
-    
     showNotification(message, type = 'success') {
-      // Clear any existing timeout
       if (this.notification.timeout) {
         clearTimeout(this.notification.timeout);
       }
-      
-      // Set notification
       this.notification = {
         show: true,
         message,
         type,
         timeout: setTimeout(() => {
           this.notification.show = false;
-        }, 5000) // Hide after 5 seconds
+        }, 5000)
       };
     }
   }
 };
 </script>
+
 
 <style scoped>
 /* Existing styles remain unchanged */
