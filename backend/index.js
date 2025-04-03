@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require('fs');
+const path = require('path');
 require("dotenv").config();
 const admin = require("firebase-admin");
 
-// Hardcoded service account credentials (for testing only)
-const serviceAccount = {
+// Create a temporary service account file
+const serviceAccountObj = {
   "type": "service_account",
   "project_id": "cofetarie-artizanala",
   "private_key_id": "3839b6822bc3d7af7714fbfbb4e59fcd6ee645cd",
@@ -18,17 +20,27 @@ const serviceAccount = {
   "universe_domain": "googleapis.com"
 };
 
-// Add explicit project ID for additional reliability
+// Create a temporary file path
+const tempServiceAccountPath = path.join(__dirname, 'serviceAccount.json');
+
+// Write the service account info to the file
+try {
+  fs.writeFileSync(tempServiceAccountPath, JSON.stringify(serviceAccountObj, null, 2));
+  console.log("✅ Service account file created successfully at:", tempServiceAccountPath);
+} catch (error) {
+  console.error("❌ Error creating service account file:", error);
+}
+
+// Set GCP project ID for additional reliability
 process.env.GCLOUD_PROJECT = "cofetarie-artizanala";
 
-// Initialize Firebase Admin with hardcoded service account
+// Initialize Firebase with the temporary file
 try {
   if (!admin.apps.length) {
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: "cofetarie-artizanala" // Explicit project ID
+      credential: admin.credential.cert(tempServiceAccountPath)
     });
-    console.log("✅ Firebase Admin initialized successfully");
+    console.log("✅ Firebase Admin initialized with service account file");
   }
 } catch (error) {
   console.error("❌ Firebase initialization error:", error);
@@ -48,9 +60,20 @@ try {
   throw new Error("Critical error: Could not initialize Firestore");
 }
 
+// Delete the temporary file after initialization (optional for security)
+try {
+  fs.unlinkSync(tempServiceAccountPath);
+  console.log("✅ Temporary service account file deleted");
+} catch (error) {
+  console.error("❌ Error deleting temporary service account file:", error);
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Rest of your code remains the same...
+// (All your route handlers stay unchanged)
 
 // Verificare că backend-ul funcționează
 app.get("/", (req, res) => {
@@ -149,13 +172,6 @@ app.post("/api/payment/save-order", async (req, res) => {
     console.log("👤 userId:", userId);
     console.log("🛒 cartItems:", JSON.stringify(cartItems, null, 2));
     console.log("🎂 customCake:", JSON.stringify(customCake, null, 2));
-
-    // Log Firebase credentials info (without exposing sensitive data)
-    console.log("🔥 Firebase project ID:", serviceAccount?.project_id || "MISSING");
-    console.log("🔥 Firebase client email:", serviceAccount?.client_email || "MISSING");
-    console.log("🔥 Private key format check:", 
-      serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
-      serviceAccount.private_key.includes("\n"));
 
     if (!sessionId) {
       console.warn("❌ No sessionId provided");
@@ -265,23 +281,6 @@ app.post("/api/payment/save-order", async (req, res) => {
     if (error.code) console.error("Error code:", error.code);
     if (error.details) console.error("Error details:", error.details);
     if (error.message) console.error("Error message:", error.message);
-    
-    // Check if this is a Firebase Auth error
-    if (error.code === 16 || (error.message && error.message.includes("UNAUTHENTICATED"))) {
-      console.error("🔥 Firebase authentication error detected!");
-      console.error("This is likely related to service account credentials");
-      
-      // Try to extract service account info for debugging (without private key)
-      try {
-        const safeServiceAccount = { ...serviceAccount };
-        if (safeServiceAccount?.private_key) {
-          safeServiceAccount.private_key = safeServiceAccount.private_key.substring(0, 20) + "... [TRUNCATED]";
-        }
-        console.error("Service account info:", JSON.stringify(safeServiceAccount, null, 2));
-      } catch (e) {
-        console.error("Could not log service account info:", e.message);
-      }
-    }
     
     res.status(500).json({ 
       error: error.message,
