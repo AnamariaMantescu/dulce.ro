@@ -28,11 +28,10 @@ app.use(
 
 
 // Handle OPTIONS preflight requests
-app.options('*', cors({
-  origin: 'https://dulce-ro.vercel.app',
+app.use(cors({
+  origin: ['https://dulce-ro.vercel.app', 'http://localhost:5001'], // Allow your frontend domain and local development
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
