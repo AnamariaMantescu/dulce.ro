@@ -2,7 +2,23 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+const admin = require("firebase-admin");
+let serviceAccount;
+
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+} catch (error) {
+  console.error("Error parsing Firebase credentials:", error);
+  // Provide more context to help debug
+  console.error("Credential string:", process.env.FIREBASE_SERVICE_ACCOUNT_JSON.substring(0, 20) + "...");
+}
+
+// Add additional logging
+console.log("Initializing Firebase with project ID:", serviceAccount?.project_id || "MISSING PROJECT ID");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 const Stripe = require("stripe");
 const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj0obkTL4ltpHGZFOGl1v07VgzPor4EYm9sLuBj15c00Ho2E9D9x');
 
@@ -117,6 +133,13 @@ app.post("/api/payment/save-order", async (req, res) => {
     console.log("🛒 cartItems:", JSON.stringify(cartItems, null, 2));
     console.log("🎂 customCake:", JSON.stringify(customCake, null, 2));
 
+    // Log Firebase credentials info (without exposing sensitive data)
+    console.log("🔥 Firebase project ID:", serviceAccount.project_id);
+    console.log("🔥 Firebase client email:", serviceAccount.client_email);
+    console.log("🔥 Private key format check:", 
+      serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
+      serviceAccount.private_key.includes("\n"));
+
     if (!sessionId) {
       console.warn("❌ No sessionId provided");
       return res.status(400).json({ error: "Session ID is required" });
@@ -136,6 +159,12 @@ app.post("/api/payment/save-order", async (req, res) => {
       products = cartItems.map(item => {
         if (!item.product) {
           console.warn("⚠️ item.product is undefined!", item);
+          return {
+            productId: 'unknown',
+            name: 'Unknown Product',
+            price: 0,
+            quantity: 1
+          };
         }
         return {
           productId: item.product?.id || 'unknown',
@@ -183,9 +212,28 @@ app.post("/api/payment/save-order", async (req, res) => {
       orderData.customCake = customCake;
     }
 
-    console.log("📝 Saving order to Firestore:", JSON.stringify(orderData, null, 2));
+    console.log("📝 Preparing to save order to Firestore");
+    console.log("📊 Order data structure:", JSON.stringify(orderData, null, 2));
+    
+    // Check Firestore connection before saving
+    console.log("🔌 Testing Firestore connection...");
+    try {
+      const testDoc = await db.collection("_test_connection").doc("test").set({
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+      console.log("✅ Firestore connection test successful");
+    } catch (firestoreTestError) {
+      console.error("❌ Firestore connection test failed:", firestoreTestError);
+      console.error("Error details:", firestoreTestError.details || "No details available");
+      console.error("Error code:", firestoreTestError.code || "No code available");
+      throw new Error(`Firestore connection failed: ${firestoreTestError.message}`);
+    }
+    
+    // Now try to save the actual order
+    console.log("💾 Saving order to Firestore collection 'orders'...");
     const orderRef = await db.collection("orders").add(orderData);
-    console.log("✅ Order saved with ID:", orderRef.id);
+    
+    console.log("✅ Order saved successfully with ID:", orderRef.id);
 
     res.json({
       success: true,
@@ -194,7 +242,35 @@ app.post("/api/payment/save-order", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error in save-order:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error stack:", error.stack);
+    
+    // Log more detailed error information
+    if (error.code) console.error("Error code:", error.code);
+    if (error.details) console.error("Error details:", error.details);
+    if (error.message) console.error("Error message:", error.message);
+    
+    // Check if this is a Firebase Auth error
+    if (error.code === 16 || (error.message && error.message.includes("UNAUTHENTICATED"))) {
+      console.error("🔥 Firebase authentication error detected!");
+      console.error("This is likely related to service account credentials");
+      
+      // Try to extract service account info for debugging (without private key)
+      try {
+        const safeServiceAccount = { ...serviceAccount };
+        if (safeServiceAccount.private_key) {
+          safeServiceAccount.private_key = safeServiceAccount.private_key.substring(0, 20) + "... [TRUNCATED]";
+        }
+        console.error("Service account info:", JSON.stringify(safeServiceAccount, null, 2));
+      } catch (e) {
+        console.error("Could not log service account info:", e.message);
+      }
+    }
+    
+    res.status(500).json({ 
+      error: error.message,
+      code: error.code || "unknown",
+      details: error.details || "No additional details" 
+    });
   }
 });
 
