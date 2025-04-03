@@ -106,81 +106,97 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
 });
 
 app.post("/api/payment/save-order", async (req, res) => {
-    try {
-      const { sessionId, cartItems, customCake, userId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      // Retrieve the session from Stripe
-      const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ['line_items']
-      });
-      
-      // Create an array of product details from cart items
-      let products = [];
-      
-      // If cartItems were sent directly from the frontend
-      if (cartItems && cartItems.length > 0) {
-        products = cartItems.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity,
-          image: item.product.image || '',
-          category: item.product.category || '',
-          subcategory: item.product.subcategory || ''
-        }));
-      } 
-      // If no cartItems in request, try to rebuild from Stripe line_items
-      else if (session.line_items && session.line_items.data.length > 0) {
-        products = session.line_items.data.map(item => ({
-          name: item.description || 'Product',
-          price: item.amount_total / 100, // Convert from cents
-          quantity: item.quantity,
-          productId: 'unknown'
-        }));
-      }
-      
-      // Create the order data object
-      const orderData = {
-        stripeSessionId: sessionId,
-        amount: session.amount_total / 100,
-        currency: session.currency,
-        paymentStatus: session.payment_status,
-        customerDetails: {
-          name: session.customer_details?.name || '',
-          email: session.customer_details?.email || '',
-          phone: session.customer_details?.phone || '',
-          address: session.customer_details?.address || {}
-        },
-        products: products,
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        status: 'new'
-      };
-      
-      // Add user ID if provided
-      if (userId) {
-        orderData.userId = userId;
-      }
-      
-      // Add custom cake if it exists
-      if (customCake) {
-        orderData.customCake = customCake;
-      }
-      
-      const orderRef = await db.collection("orders").add(orderData);
-      
-      res.json({ 
-        success: true, 
-        orderId: orderRef.id,
-        message: "Comanda a fost salvată cu succes."
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  console.log("📦 [save-order] Request received");
+
+  try {
+    const { sessionId, cartItems, customCake, userId } = req.body;
+
+    console.log("🔑 sessionId:", sessionId);
+    console.log("👤 userId:", userId);
+    console.log("🛒 cartItems:", JSON.stringify(cartItems, null, 2));
+    console.log("🎂 customCake:", JSON.stringify(customCake, null, 2));
+
+    if (!sessionId) {
+      console.warn("❌ No sessionId provided");
+      return res.status(400).json({ error: "Session ID is required" });
     }
-  });
+
+    console.log("🔍 Retrieving session from Stripe...");
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['line_items']
+    });
+
+    console.log("✅ Stripe session retrieved:", session.id);
+    
+    let products = [];
+
+    if (cartItems && cartItems.length > 0) {
+      console.log("🧠 Mapping frontend cartItems...");
+      products = cartItems.map(item => {
+        if (!item.product) {
+          console.warn("⚠️ item.product is undefined!", item);
+        }
+        return {
+          productId: item.product?.id || 'unknown',
+          name: item.product?.name || 'N/A',
+          price: item.product?.price || 0,
+          quantity: item.quantity || 1,
+          image: item.product?.image || '',
+          category: item.product?.category || '',
+          subcategory: item.product?.subcategory || ''
+        };
+      });
+    } else if (session.line_items && session.line_items.data.length > 0) {
+      console.log("🧠 Mapping Stripe line_items...");
+      products = session.line_items.data.map(item => ({
+        name: item.description || 'Product',
+        price: item.amount_total / 100,
+        quantity: item.quantity,
+        productId: 'unknown'
+      }));
+    } else {
+      console.warn("⚠️ No cartItems or Stripe line_items found.");
+    }
+
+    const orderData = {
+      stripeSessionId: sessionId,
+      amount: session.amount_total / 100,
+      currency: session.currency,
+      paymentStatus: session.payment_status,
+      customerDetails: {
+        name: session.customer_details?.name || '',
+        email: session.customer_details?.email || '',
+        phone: session.customer_details?.phone || '',
+        address: session.customer_details?.address || {}
+      },
+      products: products,
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'new'
+    };
+
+    if (userId) {
+      orderData.userId = userId;
+    }
+
+    if (customCake) {
+      orderData.customCake = customCake;
+    }
+
+    console.log("📝 Saving order to Firestore:", JSON.stringify(orderData, null, 2));
+    const orderRef = await db.collection("orders").add(orderData);
+    console.log("✅ Order saved with ID:", orderRef.id);
+
+    res.json({
+      success: true,
+      orderId: orderRef.id,
+      message: "Comanda a fost salvată cu succes."
+    });
+  } catch (error) {
+    console.error("❌ Error in save-order:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 app.get("/api/payment/session/:sessionId", async (req, res) => {
     try {
