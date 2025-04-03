@@ -106,9 +106,10 @@
 
 <script>
 // Import the PDF library
-import jsPDF from '../../node_modules/jspdf/dist/jspdf.umd.min.js'
-import { applyPlugin } from 'jspdf-autotable'
-applyPlugin(jsPDF)
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+
+
 
 export default {
   name: 'UserOrders',
@@ -317,7 +318,7 @@ export default {
       const totalWithVAT = (totalWithoutVAT + parseFloat(vat)).toFixed(2);
       
       // Add table
-      doc.autoTable({
+      autoTable(doc,{
         head: [tableColumn],
         body: tableRows,
         startY: 100,
