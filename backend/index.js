@@ -2,33 +2,69 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
-let serviceAccount;
 
+// Parse the service account from environment variable with careful error handling
+let serviceAccount;
 try {
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  
+  // Ensure private key is formatted correctly (critical fix)
+  if (serviceAccount.private_key) {
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    console.log("✅ Private key formatted successfully");
+  } else {
+    console.error("⚠️ Private key is missing from service account");
+  }
+  
+  console.log("✅ Service account parsed successfully");
 } catch (error) {
-  console.error("Error parsing Firebase credentials:", error);
-  // Provide more context to help debug
-  console.error("Credential string:", process.env.FIREBASE_SERVICE_ACCOUNT_JSON.substring(0, 20) + "...");
+  console.error("❌ Error parsing service account JSON:", error.message);
+  
+  // Fallback to direct environment variables
+  console.log("🔄 Trying fallback with direct environment variables");
+  serviceAccount = {
+    type: "service_account",
+    project_id: "cofetarie-artizanala",
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: "firebase-adminsdk-fbsvc@cofetarie-artizanala.iam.gserviceaccount.com",
+    client_id: process.env.FIREBASE_CLIENT_ID || "106142584775445274673",
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40cofetarie-artizanala.iam.gserviceaccount.com"
+  };
 }
 
-// Add additional logging
-console.log("Initializing Firebase with project ID:", serviceAccount?.project_id || "MISSING PROJECT ID");
+// Add explicit project ID to increase reliability
+process.env.GCLOUD_PROJECT = "cofetarie-artizanala";
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+// Initialize Firebase with maximum reliability settings
+try {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: "cofetarie-artizanala" // Explicit project ID
+    });
+    console.log("✅ Firebase Admin initialized successfully");
+  }
+} catch (initError) {
+  console.error("❌ Firebase initialization error:", initError);
+  // Could implement additional fallback strategy here if needed
 }
 
 const Stripe = require("stripe");
 const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj0obkTL4ltpHGZFOGl1v07VgzPor4EYm9sLuBj15c00Ho2E9D9x');
 
-
-
+// Get Firestore with error handling
 const { getFirestore } = require('firebase-admin/firestore');
-const db = getFirestore();
-
+let db;
+try {
+  db = getFirestore();
+  console.log("✅ Firestore initialized successfully");
+} catch (dbError) {
+  console.error("❌ Firestore initialization failed:", dbError);
+  throw new Error("Critical error: Could not initialize Firestore");
+}
 
 const app = express();
 app.use(cors());
@@ -133,11 +169,15 @@ app.post("/api/payment/save-order", async (req, res) => {
     console.log("🎂 customCake:", JSON.stringify(customCake, null, 2));
 
     // Log Firebase credentials info (without exposing sensitive data)
-    console.log("🔥 Firebase project ID:", serviceAccount.project_id);
-    console.log("🔥 Firebase client email:", serviceAccount.client_email);
-    console.log("🔥 Private key format check:", 
-      serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
-      serviceAccount.private_key.includes("\n"));
+    console.log("🔥 Firebase project ID:", serviceAccount?.project_id || "MISSING");
+    console.log("🔥 Firebase client email:", serviceAccount?.client_email || "MISSING");
+    if (serviceAccount?.private_key) {
+      console.log("🔥 Private key format check:", 
+        serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
+        serviceAccount.private_key.includes("\n"));
+    } else {
+      console.log("⚠️ Private key is missing or invalid");
+    }
 
     if (!sessionId) {
       console.warn("❌ No sessionId provided");
@@ -256,7 +296,7 @@ app.post("/api/payment/save-order", async (req, res) => {
       // Try to extract service account info for debugging (without private key)
       try {
         const safeServiceAccount = { ...serviceAccount };
-        if (safeServiceAccount.private_key) {
+        if (safeServiceAccount?.private_key) {
           safeServiceAccount.private_key = safeServiceAccount.private_key.substring(0, 20) + "... [TRUNCATED]";
         }
         console.error("Service account info:", JSON.stringify(safeServiceAccount, null, 2));
@@ -272,7 +312,6 @@ app.post("/api/payment/save-order", async (req, res) => {
     });
   }
 });
-
 
 app.get("/api/payment/session/:sessionId", async (req, res) => {
     try {
