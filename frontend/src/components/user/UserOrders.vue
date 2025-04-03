@@ -79,7 +79,7 @@
               <span class="btn-text">Detalii</span>
             </button>
             
-            <button class="action-btn invoice" @click="$emit('generate-invoice', order)">
+            <button class="action-btn invoice" @click="generateInvoice(order)">
               <span class="btn-icon">📄</span>
               <span class="btn-text">Generează factură</span>
             </button>
@@ -100,9 +100,22 @@
         </div>
       </div>
     </div>
+    
+    <!-- Success Notification -->
+    <div v-if="notification.show" 
+         class="notification" 
+         :class="notification.type" 
+         @click="notification.show = false">
+      {{ notification.message }}
+      <span class="notification-close">×</span>
+    </div>
   </div>
 </template>
+
 <script>
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+
 export default {
   name: 'UserOrders',
   props: {
@@ -114,6 +127,24 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+  data() {
+    return {
+      companyInfo: {
+        name: 'Dulce Ro Cofetărie Artizanală',
+        address: 'Strada Florilor nr. 12, București, România',
+        regNumber: 'J40/12345/2020',
+        cui: 'RO12345678',
+        phone: '021 234 5678',
+        email: 'contact@dulcero.ro'
+      },
+      notification: {
+        show: false,
+        message: '',
+        type: 'success',
+        timeout: null
+      }
+    };
   },
   methods: {
     formatOrderId(id) {
@@ -241,14 +272,255 @@ export default {
         return order.items[0].productId || '';
       }
       return '';
+    },
+    
+    /**
+     * PDF Generation Methods
+     */
+    generateInvoice(order) {
+      try {
+        // Create new PDF document with Romanian font support
+        const doc = new jsPDF();
+        
+        // Set document properties
+        doc.setFont('helvetica');
+        doc.setFontSize(10);
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FACTURĂ', 105, 20, { align: 'center' });
+        
+        // Generate invoice number
+        const invoiceNumber = `INV-${this.formatOrderId(order.id)}-${new Date().getFullYear()}`;
+        const currentDate = this.formatInvoiceDate(new Date());
+        
+        // Add company info - left side
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Emitent:', 14, 40);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(this.companyInfo.name, 14, 45);
+        doc.text(this.companyInfo.address, 14, 50);
+        doc.text(`Nr. Reg. Com.: ${this.companyInfo.regNumber}`, 14, 55);
+        doc.text(`CUI: ${this.companyInfo.cui}`, 14, 60);
+        doc.text(`Tel: ${this.companyInfo.phone}`, 14, 65);
+        doc.text(`Email: ${this.companyInfo.email}`, 14, 70);
+        
+        // Add invoice info - right side
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Număr factură: ${invoiceNumber}`, 140, 40);
+        doc.text(`Data emitere: ${currentDate}`, 140, 45);
+        
+        // Add client info
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Client:', 14, 85);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        
+        // Check if customer details exist
+        if (order.customerDetails) {
+          doc.text(order.customerDetails.name || 'N/A', 14, 90);
+          doc.text(this.formatAddress(order.customerDetails.address) || 'N/A', 14, 95);
+        } else {
+          doc.text('Informații client indisponibile', 14, 90);
+        }
+        
+        // Add products table
+        this.addProductsTable(doc, order);
+        
+        // Add payment method
+        doc.setFontSize(10);
+        doc.text(`Metoda de plată: ${this.getPaymentMethod(order.paymentMethod)}`, 14, doc.lastAutoTable.finalY + 20);
+        
+        // Add terms and conditions
+        doc.text('Termeni și condiții: Produsele nu pot fi returnate.', 14, doc.lastAutoTable.finalY + 25);
+        
+        // Add footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.text(
+            `${this.companyInfo.name} - Pagina ${i} din ${pageCount}`,
+            105,
+            doc.internal.pageSize.height - 10,
+            { align: 'center' }
+          );
+        }
+        
+        // Save the PDF
+        doc.save(`Factura_${invoiceNumber}.pdf`);
+        
+        // Show success notification
+        this.showNotification(`Factura ${invoiceNumber} a fost generată cu succes!`, 'success');
+        
+        return invoiceNumber;
+      } catch (error) {
+        console.error('Error generating invoice:', error);
+        this.showNotification('A apărut o eroare la generarea facturii.', 'error');
+      }
+    },
+    
+    addProductsTable(doc, order) {
+      // Define the table headers
+      const headers = [
+        ['Nr. crt.', 'Descriere', 'Cantitate', 'Preț unitar (fără TVA)', 'Total (fără TVA)']
+      ];
+      
+      // Format the items data
+      const items = this.getOrderItems(order).map((item, index) => [
+        index + 1,
+        item.name,
+        `${item.quantity} ${item.unit}`,
+        `${item.unitPrice.toFixed(2)} RON/${item.unit}`,
+        `${item.totalBeforeTax.toFixed(2)} RON`
+      ]);
+      
+      // Add the table to the document
+      doc.autoTable({
+        startY: 105,
+        head: headers,
+        body: items,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [181, 131, 141],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        margin: { top: 105 }
+      });
+      
+      // Calculate totals
+      const totalBeforeTax = this.calculateTotalBeforeTax(order);
+      const taxAmount = this.calculateTax(totalBeforeTax);
+      const totalAmount = totalBeforeTax + taxAmount;
+      
+      // Add totals to the table
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 2,
+        body: [
+          ['', '', '', 'Total (fără TVA)', `${totalBeforeTax.toFixed(2)} RON`],
+          ['', '', '', 'TVA (9%)', `${taxAmount.toFixed(2)} RON`],
+          ['', '', '', 'Total de plată', `${totalAmount.toFixed(2)} RON`]
+        ],
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fillColor: [245, 245, 245]
+        },
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 30 },
+          3: { fontStyle: 'bold' },
+          4: { fontStyle: 'bold' }
+        },
+        margin: { left: 14 }
+      });
+    },
+    
+    getOrderItems(order) {
+      // Use either products or items array from the order
+      const orderItems = order.products || order.items || [];
+      
+      return orderItems.map(item => {
+        // Determine unit of measurement based on product type
+        const unit = this.getUnitByProductType(item.productType || 'piece');
+        
+        // Calculate price without VAT (assuming 9% VAT)
+        const unitPriceWithoutVAT = (item.price || 0) / 1.09;
+        
+        return {
+          name: item.name || item.productName || 'Produs necunoscut',
+          quantity: item.quantity || 1,
+          unit: unit,
+          unitPrice: unitPriceWithoutVAT,
+          totalBeforeTax: unitPriceWithoutVAT * (item.quantity || 1)
+        };
+      });
+    },
+    
+    calculateTotalBeforeTax(order) {
+      const items = this.getOrderItems(order);
+      return items.reduce((total, item) => total + item.totalBeforeTax, 0);
+    },
+    
+    calculateTax(amount) {
+      return amount * 0.09;
+    },
+    
+    getPaymentMethod(method) {
+      if (!method) return 'Card bancar';
+      
+      const methodMap = {
+        'card': 'Card bancar',
+        'cash': 'Numerar la livrare',
+        'bank_transfer': 'Transfer bancar'
+      };
+      
+      return methodMap[method.toLowerCase()] || method;
+    },
+    
+    getUnitByProductType(type) {
+      const unitMap = {
+        'cake': 'kg',
+        'pastry': 'buc',
+        'piece': 'buc',
+        'drink': 'ml',
+        'box': 'buc'
+      };
+      
+      return unitMap[type.toLowerCase()] || 'buc';
+    },
+    
+    formatInvoiceDate(date) {
+      if (!date) return 'N/A';
+      
+      const options = { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric'
+      };
+      
+      return date.toLocaleDateString('ro-RO', options);
+    },
+    
+    showNotification(message, type = 'success') {
+      // Clear any existing timeout
+      if (this.notification.timeout) {
+        clearTimeout(this.notification.timeout);
+      }
+      
+      // Set notification
+      this.notification = {
+        show: true,
+        message,
+        type,
+        timeout: setTimeout(() => {
+          this.notification.show = false;
+        }, 5000) // Hide after 5 seconds
+      };
     }
   }
 };
 </script>
+
 <style scoped>
-/* Styles remain unchanged */
+/* Existing styles remain unchanged */
 .orders-container {
   animation: fadeIn 0.5s ease-out;
+  position: relative;
 }
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -547,39 +819,50 @@ export default {
 .btn-icon {
   font-size: 1.1rem;
 }
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .order-content {
-    flex-direction: column;
-  }
-  
-  .payment-info {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .order-actions {
-    width: 100%;
-    justify-content: center;
-  }
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out forwards;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
 }
-@media (max-width: 480px) {
-  .order-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.8rem;
+
+.notification.success {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border-left: 4px solid #4caf50;
+}
+
+.notification.error {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border-left: 4px solid #f44336;
+}
+
+.notification-close {
+  margin-left: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  
-  .payment-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .action-btn {
-    flex: 1;
-    justify-content: center;
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 </style>
