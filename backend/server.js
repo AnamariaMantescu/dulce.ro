@@ -23,10 +23,14 @@ const db = admin.firestore();
 
 const app = express();
 
-// Setup more detailed CORS
+// Setup more detailed CORS - UPDATED to include your production domain
 console.log('Setting up CORS...');
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Your frontend URLs
+  origin: [
+    'http://localhost:5173', 
+    'http://127.0.0.1:5173',
+    'https://dulce-ro.vercel.app'  // Add your production frontend domain
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -37,6 +41,16 @@ console.log('CORS configured');
 app.use((req, res, next) => {
   console.log(`Request received: ${req.method} ${req.url}`);
   console.log('Request headers:', req.headers);
+  
+  // Add CORS headers for preflight requests manually (backup)
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', 'https://dulce-ro.vercel.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    return res.status(200).send();
+  }
+  
   next();
 });
 
@@ -49,6 +63,11 @@ console.log('JSON body parser configured');
 const stripeWebhookMiddleware = express.raw({type: 'application/json'});
 
 // Direct test route
+app.get('/', (req, res) => {
+  console.log('Root endpoint accessed');
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
 app.get('/api/health', (req, res) => {
   console.log('Health check endpoint accessed');
   res.json({ status: 'ok', message: 'Server is running' });
@@ -92,8 +111,8 @@ app.post('/api/direct-checkout', async (req, res) => {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${req.headers.origin || 'http://localhost:5173'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin || 'http://localhost:5173'}/cart`,
+      success_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/cart`,
     });
     
     console.log('Direct checkout session created:', session.id);
@@ -282,6 +301,17 @@ app.post('/api/orders/finalize', async (req, res) => {
     console.error('Eroare la finalizarea comenzii:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Fix for 401 Unauthorized issue - make sure authorization middleware is properly set up
+app.use((req, res, next) => {
+  // Check if the request should be authenticated but isn't
+  const authHeader = req.headers.authorization;
+  if (req.path.startsWith('/api/admin') && (!authHeader || !authHeader.startsWith('Bearer '))) {
+    console.log('Unauthorized access attempt to admin route');
+    return res.status(401).json({ error: 'Unauthorized access' });
+  }
+  next();
 });
 
 // Error handling middleware

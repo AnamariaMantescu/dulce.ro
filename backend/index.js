@@ -1,5 +1,6 @@
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const app = express();
 require("dotenv").config();
 const admin = require("firebase-admin");
 // const serviceAccount = require("./serviceAccountKey.json");
@@ -13,13 +14,21 @@ const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj
 //     databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
 // });
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
 });
 const db = admin.firestore();
 
-const app = express();
-// Update your CORS configuration
-app.use(cors({
+app.use(
+  cors({
+    origin: 'https://dulce-ro.vercel.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+);
+
+
+// Handle OPTIONS preflight requests
+app.options('*', cors({
   origin: 'https://dulce-ro.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
