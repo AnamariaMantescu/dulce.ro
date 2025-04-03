@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const axios = require('axios'); // Make sure to install axios: npm install axios
+const axios = require('axios');
 require("dotenv").config();
 const admin = require("firebase-admin");
 
@@ -97,8 +97,8 @@ async function saveOrderToFirestoreREST(orderData) {
     // Generate a random document ID
     const randomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
-    // Build REST API URL for Firestore
-    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/orders/${randomId}`;
+    // FIXED: Correct URL format for Firestore REST API
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/orders?documentId=${randomId}`;
     
     console.log("🔗 Making REST API request to Firestore");
     const response = await axios.post(url, documentData);
@@ -119,6 +119,24 @@ app.get("/", (req, res) => {
 // Health check endpoint for frontend connection testing
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Serverul este funcțional!" });
+});
+
+// Endpoint to retrieve local backups
+app.get("/api/orders/local-backup", (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const backupPath = path.join(__dirname, 'order_backups.json');
+    
+    if (fs.existsSync(backupPath)) {
+      const backups = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+      res.json(backups);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Endpoint pentru a prelua utilizatorii din Firestore
