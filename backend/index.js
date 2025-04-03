@@ -2,24 +2,30 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
-const serviceAccount = require("./serviceAccountKey.json");
+// const serviceAccount = require("./serviceAccountKey.json");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 const Stripe = require("stripe");
 const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj0obkTL4ltpHGZFOGl1v07VgzPor4EYm9sLuBj15c00Ho2E9D9x');
 
-// Inițializare Firebase Admin SDK
+// // Inițializare Firebase Admin SDK
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount),
+//     databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
+// });
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
+  credential: admin.credential.cert(serviceAccount),
 });
-
 const db = admin.firestore();
 
 const app = express();
+// Update your CORS configuration
 app.use(cors({
-  origin: ['https://dulce-ro.vercel.app', 'http://localhost:5173'],
+  origin: 'https://dulce-ro.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
 app.use(express.json());
 
 // Verificare că backend-ul funcționează
