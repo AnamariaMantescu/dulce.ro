@@ -3,42 +3,25 @@ const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
 
-// Parse the service account from environment variable with careful error handling
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-  
-  // Ensure private key is formatted correctly (critical fix)
-  if (serviceAccount.private_key) {
-    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-    console.log("✅ Private key formatted successfully");
-  } else {
-    console.error("⚠️ Private key is missing from service account");
-  }
-  
-  console.log("✅ Service account parsed successfully");
-} catch (error) {
-  console.error("❌ Error parsing service account JSON:", error.message);
-  
-  // Fallback to direct environment variables
-  console.log("🔄 Trying fallback with direct environment variables");
-  serviceAccount = {
-    type: "service_account",
-    project_id: "cofetarie-artizanala",
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    client_email: "firebase-adminsdk-fbsvc@cofetarie-artizanala.iam.gserviceaccount.com",
-    client_id: process.env.FIREBASE_CLIENT_ID || "106142584775445274673",
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40cofetarie-artizanala.iam.gserviceaccount.com"
-  };
-}
+// Hardcoded service account credentials (for testing only)
+const serviceAccount = {
+  "type": "service_account",
+  "project_id": "cofetarie-artizanala",
+  "private_key_id": "3839b6822bc3d7af7714fbfbb4e59fcd6ee645cd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrbSTnUn9YftRw\nz2ngHXRvG7z9L6FdL+/+cyH4/gbKsdKEeL7Ywzm0ZkLleqs3pbHD1OmBQ68wD7Y4\ncwvLZVRqdS/av5mSMLRB10TAY5FPDRh8HgzgShKjmpIkq8Rk5tLPnipjuGLKoK0p\n4t0XMzv1DBKa+mf7yMOwkAPkS1iOnYib7acZ04Dr+ju7QV3Lt197zyAnra5175tx\n2PvNHXwsssJd2dSPqwuMVqQZK/ERlfoYH9nqIWQO8bN1h5oW8c6kVxnqvPEaurxI\nJuGKB827bJu2NRzsccCoSCA+elohgsyebLBV/yIBXf4afX8K9yUzKzx6CXHXnsUp\nhKMvxjD1AgMBAAECggEAMXucYu+D1eIqZXPhrnEiKm5Z08W7cQBE6PCH9m0xPbIt\nv9Jw2HYmAoZgOgh6QuJf2VTsoEUO3TMz2MCQv4H854vzJ9QVusa3Sagfbt9u0uBH\nWJB+DAIltjcIh3BTjQK6CHcx6j4Puki+I3CafDdsT7RP7I9qk5nkruMrVGtRYTzr\n26gXEFXIskV7y4JR1AVmBdhOA0hCLMuA6KZJ3cbXuyjPICc86lBqBCzdzqirsad/\nQwtZv9IDC0bm8HnilIOB+J2SO7N0I5DZ6PQNPfuQnCtZ4/xFdbJsQc7+QM0EGre/\nYB3NAif0MqOofQBdgrO3BGp34QNnbXh0ahUzstxskwKBgQDb/KXMSb3PFKP/m1Ph\nx1AsH3LRYdOjBAPy9mpm7uDpwR+opbXQdqiC+yKe4f3XgVpAGs+QzKoVBH/1sD3H\n9aX8iJ4YP1O0w+iITFXqi0jC1bv87diOJF0sPXbq5sryTtHRdl9dltcY4MBIiKMC\n3DE5s81mNJtwLwKftNqCpwhIPwKBgQDHfWOuZMLQl8eAIdIXGCoIjC/CxZPRlF1t\n7Nn5irYncjtmTMawRuvH7MWmZm+H/ZKnPxtZd3yyTdtdqHrsKvh+swx01XC4p5it\nTf4XxuhBHlnNUqyp7ZZPJDxBhIqlXYsAQpEE74yF1ZnUmq9zpkueE58WIY0m9mcd\nPbNydylZywKBgQCCcoimYTvqpeSx15ugEJ6b63IccxQaYHEvC6wAqbo5IsnxKYJs\nwVAfi2f2KzBpME0iIkPfK13X5Lk0KXQZNLNe0mxdGIA8esdSu2FfGYTl8/Prgeae\nMzYE29W+aWkC0nZc7QKT7rRSDkQ3Pr7bHVMbUmGEL8HUfiviJE5Gl2Gz5QKBgHU1\nnR3YIgbBRvxn4rKjBf9jrqQ3xjQ7gfGWWjQeZgwjN/dRYOQtp1ceLLsqMJmsSUBu\n+bjFVcTFrgAHf8HHNZ3rwYPb7JDyF+irjIGX4tpv5L+Ytc5ZxBjX53dvUq76mTMb\n6W0G+n+gEvQxtqiyqndEfBJawD6GQ+uQVyEIFomlAoGAJ/dUxhqZ8lu2TN116QD4\n+CADkdAoajJxmu1Vmrtfo67mLtCbFLQuIrXTyyJ/KSaegcteWhwVeAPC63RJu6Et\ndPqH3KRGWhdbu/V7LXUeYoAWiJfqVaM2JE8nsHBxG1789LE6GLhqw022obu4d4FY\nu0hHNkW8pYtrNU/SWC84zpc=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@cofetarie-artizanala.iam.gserviceaccount.com",
+  "client_id": "106142584775445274673",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40cofetarie-artizanala.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+};
 
-// Add explicit project ID to increase reliability
+// Add explicit project ID for additional reliability
 process.env.GCLOUD_PROJECT = "cofetarie-artizanala";
 
-// Initialize Firebase with maximum reliability settings
+// Initialize Firebase Admin with hardcoded service account
 try {
   if (!admin.apps.length) {
     admin.initializeApp({
@@ -47,9 +30,8 @@ try {
     });
     console.log("✅ Firebase Admin initialized successfully");
   }
-} catch (initError) {
-  console.error("❌ Firebase initialization error:", initError);
-  // Could implement additional fallback strategy here if needed
+} catch (error) {
+  console.error("❌ Firebase initialization error:", error);
 }
 
 const Stripe = require("stripe");
@@ -171,13 +153,9 @@ app.post("/api/payment/save-order", async (req, res) => {
     // Log Firebase credentials info (without exposing sensitive data)
     console.log("🔥 Firebase project ID:", serviceAccount?.project_id || "MISSING");
     console.log("🔥 Firebase client email:", serviceAccount?.client_email || "MISSING");
-    if (serviceAccount?.private_key) {
-      console.log("🔥 Private key format check:", 
-        serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
-        serviceAccount.private_key.includes("\n"));
-    } else {
-      console.log("⚠️ Private key is missing or invalid");
-    }
+    console.log("🔥 Private key format check:", 
+      serviceAccount.private_key.startsWith("-----BEGIN PRIVATE KEY-----") && 
+      serviceAccount.private_key.includes("\n"));
 
     if (!sessionId) {
       console.warn("❌ No sessionId provided");
