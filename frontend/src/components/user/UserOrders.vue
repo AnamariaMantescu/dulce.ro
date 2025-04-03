@@ -260,14 +260,14 @@ export default {
       
       // Add title
       doc.setFontSize(20);
-      doc.text('Factură', 105, 20, { align: 'center' });
+      doc.text('Factura', 105, 20, { align: 'center' });
       
       // Add emitter details
       doc.setFontSize(12);
       doc.text('Emitent:', 20, 35);
       doc.setFontSize(10);
-      doc.text('Dulce Ro Cofetărie Artizanală', 20, 42);
-      doc.text('Strada Florilor nr. 12, București, România', 20, 48);
+      doc.text('Dulce Ro Cofetarie Artizanala', 20, 42);
+      doc.text('Strada Florilor nr. 12, Bucuresti, Romania', 20, 48);
       doc.text('Nr. Reg. Com.: J40/12345/2020', 20, 54);
       doc.text('CUI: RO12345678', 20, 60);
       doc.text('Tel: 021 234 5678', 20, 66);
@@ -279,7 +279,7 @@ export default {
         doc.text(order.customerDetails.name || 'N/A', 120, 42);
         doc.text(this.formatAddress(order.customerDetails.address) || 'N/A', 120, 48);
       } else {
-        doc.text('Informații client indisponibile', 120, 42);
+        doc.text('Informatii client indisponibile', 120, 42);
       }
       
       // Add invoice number and date
@@ -290,7 +290,7 @@ export default {
       const products = order.products || order.items || [];
       
       // Prepare table data
-      const tableColumn = ["Nr. crt.", "Descriere", "Cantitate", "Preț unitar (fără TVA)", "Total (fără TVA)"];
+      const tableColumn = ["Nr. crt.", "Descriere", "Cantitate", "Pret unitar (Fara TVA)", "Total (Fara TVA)"];
       const tableRows = [];
       
       let totalWithoutVAT = 0;
@@ -331,17 +331,17 @@ export default {
       const finalY = doc.lastAutoTable.finalY + 10;
       
       // Add totals
-      doc.text(`Total (fără TVA): ${totalWithoutVAT.toFixed(2)} RON`, 130, finalY);
+      doc.text(`Total (fara TVA): ${totalWithoutVAT.toFixed(2)} RON`, 130, finalY);
       doc.text(`TVA (9%): ${vat} RON`, 130, finalY + 7);
       doc.setFontSize(12);
-      doc.text(`Total de plată: ${totalWithVAT} RON`, 130, finalY + 14);
+      doc.text(`Total de plata: ${totalWithVAT} RON`, 130, finalY + 14);
       
       // Add payment method
       doc.setFontSize(10);
-      doc.text(`Metoda de plată: ${this.getPaymentMethod(order.paymentStatus)}`, 20, finalY + 25);
+      doc.text(`Metoda de plata: ${this.getPaymentMethod(order.paymentStatus)}`, 20, finalY + 25);
       
       // Add terms
-      doc.text('Termeni și condiții: Produsele nu pot fi returnate.', 20, finalY + 35);
+      doc.text('Termeni si conditii: Produsele nu pot fi returnate.', 20, finalY + 35);
       
       // Save the PDF
       doc.save(`Factura_${this.formatOrderId(order.id)}.pdf`);
