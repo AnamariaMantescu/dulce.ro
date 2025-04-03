@@ -124,6 +124,8 @@
 </template>
 
 <script>
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 export default {
   name: 'OrderDetailsModal',
   props: {

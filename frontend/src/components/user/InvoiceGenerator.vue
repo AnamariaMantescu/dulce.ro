@@ -55,6 +55,7 @@ import UserOrders from '@/components/user/UserOrders.vue';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+
 export default {
   components: {
     UserOrders
