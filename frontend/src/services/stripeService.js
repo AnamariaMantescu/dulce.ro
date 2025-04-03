@@ -1,7 +1,8 @@
 // frontend/src/services/stripeService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5001/api/payment';
+// 🟢 Use environment variable for deployed API, fallback to local dev
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/payment`;
 
 const stripeService = {
   // Create a checkout session

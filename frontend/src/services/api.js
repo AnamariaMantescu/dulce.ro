@@ -1,8 +1,8 @@
 // client/src/services/api.js
 import axios from 'axios'
 
-
-const API_URL = 'http://localhost:5001/api'
+// 🟢 Get API base from environment variable (fallback to localhost for local dev)
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api`
 
 export default {
   // Produse
@@ -31,6 +31,6 @@ export default {
   submitQuizAnswers(answers) {
     return axios.post(`${API_URL}/quiz/submit`, answers)
   }
-  
+
   // Adaugă alte metode pentru toate endpoint-urile API
 }

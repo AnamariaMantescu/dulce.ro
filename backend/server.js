@@ -23,10 +23,15 @@ const db = admin.firestore();
 
 const app = express();
 
-// Setup more detailed CORS
+// Setup more detailed CORS - UPDATED to include Vercel domain
 console.log('Setting up CORS...');
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Your frontend URLs
+  origin: [
+    'http://localhost:5173', 
+    'http://127.0.0.1:5173',
+    'https://dulce-ro.vercel.app', // Added your Vercel domain
+    /\.vercel\.app$/ // Allow all subdomains of vercel.app
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -47,6 +52,11 @@ console.log('JSON body parser configured');
 
 // Middleware pentru webhook Stripe (trebuie să fie raw pentru a verifica semnătura)
 const stripeWebhookMiddleware = express.raw({type: 'application/json'});
+
+// Add a root endpoint for health checks
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API is running' });
+});
 
 // Direct test route
 app.get('/api/health', (req, res) => {
@@ -87,13 +97,14 @@ app.post('/api/direct-checkout', async (req, res) => {
     
     console.log('Line items created for direct checkout');
     
-    // Create session
+    // Create session - UPDATED to use the origin from the request properly
+    const origin = req.headers.origin || 'http://localhost:5173';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${req.headers.origin || 'http://localhost:5173'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin || 'http://localhost:5173'}/cart`,
+      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/cart`,
     });
     
     console.log('Direct checkout session created:', session.id);

@@ -5,12 +5,13 @@ import App from "./App.vue";
 import router from "./router/index.js"; 
 import store from "./store"; // Importă store-ul
 
-
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
 import axios from "axios";
-axios.defaults.baseURL = "http://localhost:5001"; 
+
+// 🟢 Set base URL dynamically from environment variable
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 // === Import pentru Firebase ===
 import { auth } from "./firebase";
