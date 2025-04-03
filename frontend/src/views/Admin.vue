@@ -77,6 +77,8 @@ import AdminProductsPanel from '@/components/admin/AdminProductsPanel.vue';
 import AdminSpecialDaysPanel from '@/components/admin/AdminSpecialDaysPanel.vue';
 import AdminThemesPanel from '@/components/admin/AdminThemesPanel.vue';
 import AdminOrdersPanel from '@/components/admin/AdminOrdersPanel.vue';
+// Add to the script section of your Admin.vue component
+import { useStore } from 'vuex';
 
 export default {
   name: 'AdminDashboard',
@@ -111,6 +113,17 @@ export default {
     };
   },
   created() {
+    // Check and log admin status for debugging
+    const store = useStore();
+    const isAdmin = store.getters['user/isAdmin'];
+    const isAdminLocalStorage = JSON.parse(localStorage.getItem('isAdmin') || 'false');
+    const userProfile = store.state.user.userProfile;
+    
+    console.log('Admin component created');
+    console.log('Admin status from getter:', isAdmin);
+    console.log('Admin status from localStorage:', isAdminLocalStorage);
+    console.log('User profile:', userProfile);
+    
     // Check if URL has tab parameter
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');

@@ -8,7 +8,7 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: () => import('../views/Admin.vue'),
-    // meta: { requiresAuth: true, admin: true } 
+    meta: { requiresAuth: true, admin: true } 
   },  
   {
     path: '/',
@@ -234,14 +234,27 @@ const router = createRouter({
 // Navigation guards
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAdmin = to.matched.some(record => record.meta.admin);
+  
   // Get authentication state from store if possible, fallback to localStorage
   let isAuthenticated;
+  let isAdmin = false;
   
   try {
     isAuthenticated = store.getters['user/isAuthenticated'];
+    isAdmin = store.getters['user/isAdmin'];
   } catch (e) {
     // Fallback to localStorage if store is not available
     isAuthenticated = JSON.parse(localStorage.getItem('isAuthenticated')) || false;
+    // You might want to store admin status in localStorage as well
+    isAdmin = JSON.parse(localStorage.getItem('isAdmin')) || false;
+  }
+  
+  // Check for admin routes
+  if (requiresAdmin && !isAdmin) {
+    // If route requires admin and user is not admin, redirect to home
+    next({ path: '/' });
+    return;
   }
   
   if (requiresAuth && !isAuthenticated) {
@@ -269,7 +282,6 @@ router.beforeEach((to, from, next) => {
   } else {
     next();
   }
-  
 });
 
 export default router;

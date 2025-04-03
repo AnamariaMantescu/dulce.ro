@@ -64,63 +64,77 @@ export default {
     const toast = useToast();
     const store = useStore();
 
-    const login = async () => {
-      error.value = '';
-      loading.value = true;
+// Replace the login function in your Login.vue component
+const login = async () => {
+  error.value = '';
+  loading.value = true;
+  
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+    
+    // Enhanced debugging
+    console.log('Authentication successful:', userCredential.user);
+    
+    // Set the user in the store and AWAIT this operation to ensure it completes
+    await store.dispatch('user/setUser', userCredential.user);
+    
+    // IMPORTANT: Wait for the full user profile to be loaded, including admin status
+    await store.dispatch('user/fetchUserProfile', userCredential.user.uid);
+    
+    // Debug the user profile and admin status
+    console.log('User profile after login:', store.state.user.userProfile);
+    console.log('Is admin?', store.getters['user/isAdmin']);
+    
+    // Store admin status in localStorage for persistent access
+    localStorage.setItem('isAdmin', JSON.stringify(store.getters['user/isAdmin']));
+    
+    // Show success toast
+    toast.success('Autentificare reușită!');
+    
+    // If user is admin and trying to access admin page, go there directly
+    if (store.getters['user/isAdmin'] && router.currentRoute.value.query.redirect === '/admin') {
+      console.log('Admin user, redirecting to admin page');
+      router.push('/admin');
+      return;
+    }
+    
+    // For other cases, use the normal redirect logic with a delay to ensure store updates
+    setTimeout(() => {
+      const redirectTo = router.currentRoute.value.query.redirect;
+      console.log('Redirect parameter:', redirectTo);
       
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
-        
-        // Enhanced debugging
-        console.log('Authentication successful:', userCredential.user);
-        
-        // Set the user in the store and AWAIT this operation to ensure it completes
-        await store.dispatch('user/setUser', userCredential.user);
-        
-        // More debugging to confirm the auth state
-        console.log('User set in store, auth state:', store.getters['user/isAuthenticated']);
-        console.log('Current user after login:', store.getters['user/currentUser']);
-        
-        // Show success toast
-        toast.success('Autentificare reușită!');
-        
-        // Check for redirect parameter and wait a moment to ensure store is updated
-        setTimeout(() => {
-          const redirectTo = router.currentRoute.value.query.redirect;
-          console.log('Redirect parameter:', redirectTo);
-          
-          if (redirectTo) {
-            // Redirect to the specified route
-            console.log('Redirecting to:', redirectTo);
-            router.push({ name: redirectTo });
-          } else {
-            // Default redirect
-            router.push('/');
-          }
-        }, 300); // Short delay to ensure store updates are processed
-      } catch (err) {
-        console.error('Eroare autentificare:', err);
-        
-        switch(err.code) {
-          case 'auth/invalid-email':
-            error.value = 'Adresa de email este invalidă.';
-            break;
-          case 'auth/user-disabled':
-            error.value = 'Acest cont a fost dezactivat.';
-            break;
-          case 'auth/user-not-found':
-            error.value = 'Nu există un cont asociat cu acest email.';
-            break;
-          case 'auth/wrong-password':
-            error.value = 'Parolă incorectă.';
-            break;
-          default:
-            error.value = 'A apărut o eroare la autentificare.';
-        }
-      } finally {
-        loading.value = false;
+      if (redirectTo) {
+        // Redirect to the specified route
+        console.log('Redirecting to:', redirectTo);
+        router.push(redirectTo);
+      } else {
+        // Default redirect
+        router.push('/');
       }
-    };
+    }, 300); // Short delay to ensure store updates are processed
+  } catch (err) {
+    console.error('Eroare autentificare:', err);
+    
+    switch(err.code) {
+      case 'auth/invalid-email':
+        error.value = 'Adresa de email este invalidă.';
+        break;
+      case 'auth/user-disabled':
+        error.value = 'Acest cont a fost dezactivat.';
+        break;
+      case 'auth/user-not-found':
+        error.value = 'Nu există un cont asociat cu acest email.';
+        break;
+      case 'auth/wrong-password':
+        error.value = 'Parolă incorectă.';
+        break;
+      default:
+        error.value = 'A apărut o eroare la autentificare.';
+    }
+  } finally {
+    loading.value = false;
+  }
+};
     
     const resetPassword = async () => {
       if (!email.value) {

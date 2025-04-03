@@ -1,6 +1,6 @@
 // services/stripe.js
 // Define API URL using Vite's environment variables approach
-const API_URL = import.meta.env ? import.meta.env.VITE_API_URL || 'http://localhost:5001/api' : 'http://localhost:5001/api';
+const API_URL = import.meta.env ? import.meta.env.VITE_API_URL || 'https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app/api' : 'https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app/api';
 
 export default {
   /**

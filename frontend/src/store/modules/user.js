@@ -163,16 +163,22 @@ export default {
     },
     
     // Acțiune apelată la delogare
-    async logout({ commit }) {
-      try {
-        await signOut(auth);
-        commit('CLEAR_USER');
-      } catch (error) {
-        console.error('Eroare la delogare:', error);
-        commit('SET_ERROR', 'A apărut o eroare la delogare.');
-        throw error;
-      }
-    },
+   // Update the logout action in your user.js store module
+async logout({ commit }) {
+  try {
+    await signOut(auth);
+    commit('CLEAR_USER');
+    
+    // Clear localStorage authentication data
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('isAdmin');
+    console.log('User logged out, localStorage cleared');
+  } catch (error) {
+    console.error('Eroare la delogare:', error);
+    commit('SET_ERROR', 'A apărut o eroare la delogare.');
+    throw error;
+  }
+},
     
     // Actualizează starea utilizatorului când se schimbă starea de autentificare
     async setUser({ commit, dispatch }, user) {
@@ -194,24 +200,35 @@ export default {
       }
     },
     
-    // Încarcă profilul utilizatorului din Firestore
-    async fetchUserProfile({ commit }, uid) {
-      try {
-        const docRef = doc(db, 'users', uid);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          commit('SET_USER_PROFILE', docSnap.data());
-          console.log('User profile fetched and set in store');
-        } else {
-          console.log('Nu există un profil pentru acest utilizator!');
-          commit('SET_USER_PROFILE', null);
-        }
-      } catch (error) {
-        console.error('Eroare la încărcarea profilului:', error);
-        commit('SET_ERROR', 'Nu s-a putut încărca profilul utilizatorului.');
-      }
-    },
+// Update the fetchUserProfile action in your user.js store module
+async fetchUserProfile({ commit }, uid) {
+  try {
+    const docRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      commit('SET_USER_PROFILE', userData);
+      console.log('User profile fetched and set in store:', userData);
+      
+      // Store authentication and admin status in localStorage
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('isAdmin', JSON.stringify(userData.role === 'admin'));
+      
+      console.log('Admin status stored in localStorage:', userData.role === 'admin');
+    } else {
+      console.log('Nu există un profil pentru acest utilizator!');
+      commit('SET_USER_PROFILE', null);
+      localStorage.setItem('isAuthenticated', 'false');
+      localStorage.setItem('isAdmin', 'false');
+    }
+  } catch (error) {
+    console.error('Eroare la încărcarea profilului:', error);
+    commit('SET_ERROR', 'Nu s-a putut încărca profilul utilizatorului.');
+    localStorage.setItem('isAuthenticated', 'false');
+    localStorage.setItem('isAdmin', 'false');
+  }
+},
     
     // Actualizează profilul utilizatorului
     async updateUserProfile({ commit, state }, profileData) {
@@ -478,7 +495,25 @@ async submitReview({ commit, state, dispatch }, reviewData) {
     throw error;
   }
 },   
+    // Add this function to your user.js store module actions
+async promoteToAdmin({ commit, state }, userId) {
+  try {
+    if (!state.currentUser || !state.userProfile?.role === 'admin') {
+      throw new Error('You do not have permission to perform this action');
+    }
     
+    // Update the user's role in Firestore
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      role: 'admin'
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error promoting user to admin:', error);
+    throw error;
+  }
+},
     // Editează o recenzie existentă
     async editReview({ state, dispatch }, { reviewId, reviewData }) {
       if (!state.currentUser) {
