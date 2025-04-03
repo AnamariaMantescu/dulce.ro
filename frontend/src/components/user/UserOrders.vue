@@ -1,6 +1,4 @@
 <!-- components/user/UserOrders.vue -->
-
-<!-- components/user/UserOrders.vue -->
 <template>
   <div class="orders-container">
     <h2 class="section-title">Comenzile Mele</h2>
@@ -76,12 +74,28 @@
         <!-- Order Footer -->
         <div class="order-footer">
           <div class="order-actions">
-            <button class="action-btn view" @click="$emit('view-order-details', order.id)">
+            <!-- Detalii button -->
+            <button
+              class="action-btn view"
+              @click="$emit('view-order-details', order.id)"
+            >
               <span class="btn-icon">👁️</span>
               <span class="btn-text">Detalii</span>
             </button>
+
+            <!-- Genereaza Factura button -->
+            <button
+              class="action-btn view"
+              @click="generateInvoice(order)"
+            >
+              <span class="btn-icon">📄</span>
+              <span class="btn-text">Generează Factură</span>
+            </button>
             
-            <button class="action-btn track" v-if="canTrack(order.info)">
+            <button
+              class="action-btn track"
+              v-if="canTrack(order.info)"
+            >
               <span class="btn-icon">🚚</span>
               <span class="btn-text">Urmărire</span>
             </button>
@@ -89,7 +103,8 @@
             <button 
               class="action-btn review" 
               v-if="canReview(order)" 
-              @click="$emit('add-review', {orderId: order.id, productId: getFirstProductId(order)})">
+              @click="$emit('add-review', {orderId: order.id, productId: getFirstProductId(order)})"
+            >
               <span class="btn-icon">⭐</span>
               <span class="btn-text">Recenzie</span>
             </button>
@@ -101,6 +116,10 @@
 </template>
 
 <script>
+// 1. Import jsPDF and the autoTable plugin
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
+
 export default {
   name: 'UserOrders',
   props: {
@@ -119,15 +138,11 @@ export default {
     },
     formatDate(timestamp) {
       if (!timestamp) return 'N/A';
-      
-      // Check if timestamp is a Firebase Timestamp object
       if (timestamp.toDate && typeof timestamp.toDate === 'function') {
         timestamp = timestamp.toDate();
       } else if (typeof timestamp === 'string') {
         timestamp = new Date(timestamp);
       }
-      
-      // Format date as DD Month YYYY at HH:MM
       const options = { 
         day: 'numeric', 
         month: 'long', 
@@ -139,7 +154,6 @@ export default {
     },
     formatPrice(amount) {
       if (!amount && amount !== 0) return 'N/A';
-      
       return new Intl.NumberFormat('ro-RO', {
         style: 'currency',
         currency: 'RON',
@@ -148,7 +162,6 @@ export default {
     },
     formatAddress(address) {
       if (!address) return 'N/A';
-      
       const parts = [];
       if (address.line1) parts.push(address.line1);
       if (address.line2) parts.push(address.line2);
@@ -156,89 +169,153 @@ export default {
       if (address.state) parts.push(address.state);
       if (address.postal_code) parts.push(address.postal_code);
       if (address.country) parts.push(address.country);
-      
       return parts.join(', ');
     },
     getStatusClass(status) {
       if (!status) return 'status-default';
-      
       const statusMap = {
         'în pregătire': 'status-processing',
         'la livrare': 'status-shipped',
         'livrat': 'status-delivered'
       };
-      
-      // Default to the original status if not found in the map
       return statusMap[status.toLowerCase()] || 'status-default';
     },
     getStatusText(status) {
       if (!status) return 'Necunoscut';
-      
       const statusMap = {
         'în pregătire': 'În pregătire',
         'la livrare': 'La livrare',
         'livrat': 'Livrat'
       };
-      
-      // Return the mapped status or the original status
       return statusMap[status.toLowerCase()] || status;
     },
     getPaymentStatusClass(status) {
       if (!status) return 'payment-unknown';
-      
       const statusMap = {
         'paid': 'payment-paid',
         'unpaid': 'payment-unpaid',
         'pending': 'payment-pending',
         'failed': 'payment-failed'
       };
-      
       return statusMap[status.toLowerCase()] || 'payment-unknown';
     },
     getPaymentStatusText(status) {
       if (!status) return 'Necunoscut';
-      
       const statusMap = {
         'paid': 'Plătită',
         'unpaid': 'Neplătită',
         'pending': 'În așteptare',
         'failed': 'Eșuată'
       };
-      
       return statusMap[status.toLowerCase()] || status;
     },
     getPaymentStatusIcon(status) {
       if (!status) return '❓';
-      
       const iconMap = {
         'paid': '✅',
         'unpaid': '❌',
         'pending': '⏳',
         'failed': '❗'
       };
-      
       return iconMap[status.toLowerCase()] || '❓';
     },
     canTrack(status) {
       return status && ['la livrare'].includes(status.toLowerCase());
     },
     canReview(order) {
-      // Check if the order is delivered and contains products
       return order && 
              order.info && 
              (order.info.toLowerCase() === 'livrat' || 
-              order.info.toLowerCase() === 'în pregătire') && // Temporarily include 'în pregătire' for testing
+              order.info.toLowerCase() === 'în pregătire') &&
              ((order.products && order.products.length > 0) || 
               (order.items && order.items.length > 0));
     },
     getFirstProductId(order) {
-      // Get first product ID from either products or items array
       if (order.products && order.products.length > 0) {
         return order.products[0].productId || '';
       } else if (order.items && order.items.length > 0) {
         return order.items[0].productId || '';
       }
       return '';
+    },
+
+    // 2. The method to generate the PDF invoice
+    generateInvoice(order) {
+      // Create new jsPDF instance
+      const doc = new jsPDF();
+
+      // Basic invoice data at the top
+      doc.setFontSize(14);
+      doc.text('Factură', 14, 20);
+
+      doc.setFontSize(10);
+      doc.text('Emitent: Dulce Ro Cofetărie Artizanală', 14, 28);
+      doc.text('Strada Florilor nr. 12, București, România', 14, 34);
+      doc.text('Nr. Reg. Com.: J40/12345/2020 | CUI: RO12345678', 14, 40);
+      doc.text('Tel: 021 234 5678 | Email: contact@dulcero.ro', 14, 46);
+
+      // Client info
+      doc.text(`Client: ${order.customerDetails?.name || 'N/A'}`, 14, 54);
+      doc.text(`Adresă: ${this.formatAddress(order.customerDetails?.address)}`, 14, 60);
+
+      // Factura number (just use order.id for simplicity) & date
+      doc.text(`Număr Factură: ${this.formatOrderId(order.id)}`, 14, 68);
+      doc.text(`Data Emitere: ${this.formatDate(new Date())}`, 14, 74);
+
+      // Table of products
+      const products = order.products || order.items || []; 
+      // Convert each product to row data: [ Nr. crt, Denumire, Cantitate, Preț unitar, Total ]
+      let tableData = products.map((p, index) => {
+        // For simplicity, assume:
+        // p.title = 'Tiramisu clasic'
+        // p.quantity = 2
+        // p.unit = 'kg'
+        // p.price = 50
+        // p.totalPrice = p.quantity * p.price
+        return [
+          (index + 1).toString(),
+          p.title || 'Produs',
+          p.quantity + ' ' + (p.unit || 'buc'),
+          `${p.price} RON/${p.unit || 'buc'}`,
+          `${(p.quantity * p.price).toFixed(2)} RON`
+        ];
+      });
+
+      // Use autoTable
+      doc.autoTable({
+        startY: 84, // Where table starts on the Y axis
+        head: [['Nr. crt.', 'Descriere', 'Cantitate', 'Preț unitar (fără TVA)', 'Total (fără TVA)']],
+        body: tableData,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [200, 200, 200] } // Light gray for header
+      });
+
+      // Compute totals
+      // (You might have these from order.amount or recalculate from product list)
+      let subtotal = 0;
+      products.forEach(p => {
+        subtotal += (p.quantity * p.price);
+      });
+      const tva = subtotal * 0.09; // 9% TVA
+      const total = subtotal + tva;
+
+      // Totals area
+      let finalY = doc.lastAutoTable.finalY + 10; // Where to place total rows
+      doc.text(`Total (fără TVA): ${subtotal.toFixed(2)} RON`, 14, finalY);
+      finalY += 6;
+      doc.text(`TVA (9%): ${tva.toFixed(2)} RON`, 14, finalY);
+      finalY += 6;
+      doc.setFont(undefined, 'bold');
+      doc.text(`Total de plată: ${total.toFixed(2)} RON`, 14, finalY);
+      doc.setFont(undefined, 'normal');
+
+      finalY += 10;
+      doc.text('Metoda de plată: Card bancar (exemplu)', 14, finalY);
+      finalY += 6;
+      doc.text('Termeni și condiții: Produsele nu pot fi returnate.', 14, finalY);
+
+      // Save the PDF (example: Factura_<orderId>.pdf)
+      doc.save(`Factura_${order.id || 'fara_ID'}.pdf`);
     }
   }
 };
