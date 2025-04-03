@@ -15,7 +15,11 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['https://dulce-ro.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Verificare că backend-ul funcționează
@@ -95,8 +99,8 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
             phone_number_collection: {
                 enabled: true
             },
-            success_url: `${req.headers.origin || 'http://localhost:5173'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin || 'http://localhost:5173'}/cart`,
+            success_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/cart`,
         });
 
         res.json({ id: session.id, url: session.url });
