@@ -264,70 +264,67 @@ export default {
   },
   
   computed: {
-    ...mapState('products', ['error']),
-    ...mapGetters('products', ['getCurrentProduct']),
-    ...mapGetters('themes', ['allThemes', 'currentThemes']),
-    ...mapGetters('specialDays', ['getAllSpecialDays']),
+  ...mapState('products', ['error']),
+  ...mapGetters('products', ['getCurrentProduct']),
+  ...mapGetters('themes', ['allThemes', 'currentThemes']),
+  ...mapGetters('specialDays', ['getAllSpecialDays']),
+  
+  isThemeActive() {
+    if (!this.productThemeInfo) return true;
     
-    isThemeActive() {
-      if (!this.productThemeInfo) return true; // No theme association means product is always available from theme perspective
-      
-      const today = new Date();
-      const startDate = new Date(this.productThemeInfo.start_date);
-      const endDate = new Date(this.productThemeInfo.end_date);
-      
-      // Set to end of day for end date
-      endDate.setHours(23, 59, 59, 999);
-      
-      return today >= startDate && today <= endDate && this.productThemeInfo.active !== false;
-    },
+    const today = new Date();
+    const startDate = new Date(this.productThemeInfo.start_date);
+    const endDate = new Date(this.productThemeInfo.end_date);
+    endDate.setHours(23, 59, 59, 999);
     
-    isSpecialDayActive() {
-      if (!this.productSpecialDayInfo) return true; // No special day association means product is always available from special day perspective
-      
-      const today = new Date();
-      const specialDayDate = new Date(this.productSpecialDayInfo.date);
-      
-      // Check if it's the same day (ignoring time)
-      const isSameDay = 
-        today.getFullYear() === specialDayDate.getFullYear() &&
-        today.getMonth() === specialDayDate.getMonth() &&
-        today.getDate() === specialDayDate.getDate();
-      
-      return isSameDay && this.productSpecialDayInfo.active !== false;
-    },
+    return today >= startDate && today <= endDate && this.productThemeInfo.active !== false;
+  },
+  
+  isSpecialDayActive() {
+    if (!this.productSpecialDayInfo) return true;
     
-    isProductUnavailable() {
-      if (!this.product) return true;
-      
-      // If product has a theme association but the theme is not active
-      if (this.productThemeInfo && !this.isThemeActive) return true;
-      
-      // If product has a special day association but the special day is not active
-      if (this.productSpecialDayInfo && !this.isSpecialDayActive) return true;
-      
-      return false;
-    },
+    const today = new Date();
+    const specialDayDate = new Date(this.productSpecialDayInfo.date);
     
-    // Determines which discount to apply (theme or special day)
-    activeDiscountInfo() {
-      // Special day discount has higher priority if both are active
-      if (this.productSpecialDayInfo && this.isSpecialDayActive && this.productSpecialDayInfo.discount) {
-        return {
-          type: 'special-day',
-          discount: this.productSpecialDayInfo.discount,
-          source: this.productSpecialDayInfo.name
-        };
-      }
-      
-      // Theme week discount if active
-      if (this.productThemeInfo && this.isThemeActive && this.productThemeInfo.special_discount) {
-        return {
-          type: 'theme',
-          discount: this.productThemeInfo.special_discount,
-          source: this.productThemeInfo.name
-        };
-      }
+    return (
+      today.getFullYear() === specialDayDate.getFullYear() &&
+      today.getMonth() === specialDayDate.getMonth() &&
+      today.getDate() === specialDayDate.getDate() &&
+      this.productSpecialDayInfo.active !== false
+    );
+  },
+  
+  isProductUnavailable() {
+    if (!this.product) return true;
+
+    // Explicit availability check from database
+    if (this.product.availability && this.product.availability === "indisponibil") return true;
+
+    // Theme availability check
+    if (this.productThemeInfo && !this.isThemeActive) return true;
+
+    // Special day availability check
+    if (this.productSpecialDayInfo && !this.isSpecialDayActive) return true;
+
+    return false;
+  },
+  
+  activeDiscountInfo() {
+    if (this.productSpecialDayInfo && this.isSpecialDayActive && this.productSpecialDayInfo.discount) {
+      return {
+        type: 'special-day',
+        discount: this.productSpecialDayInfo.discount,
+        source: this.productSpecialDayInfo.name
+      };
+    }
+    
+    if (this.productThemeInfo && this.isThemeActive && this.productThemeInfo.special_discount) {
+      return {
+        type: 'theme',
+        discount: this.productThemeInfo.special_discount,
+        source: this.productThemeInfo.name
+      };
+    }
       
       return null; // No active discount
     }
