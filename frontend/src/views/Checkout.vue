@@ -26,7 +26,11 @@
           <div class="totals">
             <div class="totals-row">
               <span>Subtotal</span>
-              <span>{{ subtotal.toFixed(2) }} lei</span>
+              <span>{{ netSubtotal.toFixed(2) }} lei</span>
+            </div>
+            <div class="totals-row">
+              <span>TVA (9%)</span>
+              <span>{{ taxAmount.toFixed(2) }} lei</span>
             </div>
             <div class="totals-row">
               <span>Cost Livrare</span>
@@ -64,7 +68,8 @@ export default {
   name: 'Checkout',
   data() {
     return {
-      isLoading: false
+      isLoading: false,
+      taxRate: 0.09 // 9% tax rate
     };
   },
   computed: {
@@ -75,7 +80,16 @@ export default {
       'discountAmount',
       'total',
       'customCake'
-    ])
+    ]),
+    netSubtotal() {
+      // Calculate net price (subtotal without tax)
+      // Since subtotal includes 9% tax, we need to divide by 1.09
+      return this.subtotal / 1.09;
+    },
+    taxAmount() {
+      // Calculate tax amount (9% of net subtotal)
+      return this.netSubtotal * this.taxRate;
+    }
   },
   methods: {
     async proceedToPayment() {
