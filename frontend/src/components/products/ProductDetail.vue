@@ -6,6 +6,8 @@
         <div v-if="product.isNew" class="product-badge new">Nou</div>
         <div v-if="productThemeInfo && !isThemeActive" class="product-badge limited">Indisponibil</div>
         <div v-if="productSpecialDayInfo && !isSpecialDayActive" class="product-badge limited">Indisponibil</div>
+        <div v-if="isProductUnavailable" class="product-badge limited">Indisponibil</div>
+
       </div>
       <div class="thumbnail-gallery">
         <div 
