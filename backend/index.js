@@ -15,16 +15,16 @@ try {
 // Add additional logging
 console.log("Initializing Firebase with project ID:", serviceAccount?.project_id || "MISSING PROJECT ID");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
 const Stripe = require("stripe");
 const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj0obkTL4ltpHGZFOGl1v07VgzPor4EYm9sLuBj15c00Ho2E9D9x');
 
-// Inițializare Firebase Admin SDK
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-});
+
 
 const { getFirestore } = require('firebase-admin/firestore');
 const db = getFirestore();
