@@ -266,8 +266,8 @@ export default {
       doc.setFontSize(12);
       doc.text('Emitent:', 20, 35);
       doc.setFontSize(10);
-      doc.text('Dulce Ro Cofetarie Artizanala', 20, 42);
-      doc.text('Strada Florilor nr. 12, Bucuresti, Romania', 20, 48);
+      doc.text('Dulce Cofetarie Artizanala', 20, 42);
+      doc.text('Str. Florilor nr. 12,Bucuresti,RO', 20, 48);
       doc.text('Nr. Reg. Com.: J40/12345/2020', 20, 54);
       doc.text('CUI: RO12345678', 20, 60);
       doc.text('Tel: 021 234 5678', 20, 66);
