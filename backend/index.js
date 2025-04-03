@@ -5,7 +5,8 @@ const path = require('path');
 require("dotenv").config();
 const admin = require("firebase-admin");
 
-// Create a temporary service account file
+// Create credential file for Google Application Default Credentials
+const googleCredentialsPath = path.join(__dirname, 'google-credentials.json');
 const serviceAccountObj = {
   "type": "service_account",
   "project_id": "cofetarie-artizanala",
@@ -20,27 +21,24 @@ const serviceAccountObj = {
   "universe_domain": "googleapis.com"
 };
 
-// Create a temporary file path
-const tempServiceAccountPath = path.join(__dirname, 'serviceAccount.json');
-
-// Write the service account info to the file
 try {
-  fs.writeFileSync(tempServiceAccountPath, JSON.stringify(serviceAccountObj, null, 2));
-  console.log("✅ Service account file created successfully at:", tempServiceAccountPath);
+  fs.writeFileSync(googleCredentialsPath, JSON.stringify(serviceAccountObj, null, 2));
+  console.log("✅ Google credentials file created successfully at:", googleCredentialsPath);
 } catch (error) {
-  console.error("❌ Error creating service account file:", error);
+  console.error("❌ Error creating Google credentials file:", error);
 }
 
-// Set GCP project ID for additional reliability
+// Set environment variables for Google auth
+process.env.GOOGLE_APPLICATION_CREDENTIALS = googleCredentialsPath;
 process.env.GCLOUD_PROJECT = "cofetarie-artizanala";
 
-// Initialize Firebase with the temporary file
+// Initialize Firebase with Application Default Credentials
 try {
   if (!admin.apps.length) {
     admin.initializeApp({
-      credential: admin.credential.cert(tempServiceAccountPath)
+      // No explicit credential provided - will use ADC
     });
-    console.log("✅ Firebase Admin initialized with service account file");
+    console.log("✅ Firebase Admin initialized with Google Application Default Credentials");
   }
 } catch (error) {
   console.error("❌ Firebase initialization error:", error);
@@ -60,20 +58,12 @@ try {
   throw new Error("Critical error: Could not initialize Firestore");
 }
 
-// Delete the temporary file after initialization (optional for security)
-try {
-  fs.unlinkSync(tempServiceAccountPath);
-  console.log("✅ Temporary service account file deleted");
-} catch (error) {
-  console.error("❌ Error deleting temporary service account file:", error);
-}
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rest of your code remains the same...
-// (All your route handlers stay unchanged)
+// Rest of your existing endpoints remain the same
+// ...
 
 // Verificare că backend-ul funcționează
 app.get("/", (req, res) => {
