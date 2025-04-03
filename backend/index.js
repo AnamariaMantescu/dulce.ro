@@ -1,39 +1,21 @@
-const express = require('express');
-const cors = require('cors');
-const app = express();
+const express = require("express");
+const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
-// const serviceAccount = require("./serviceAccountKey.json");
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const serviceAccount = require("./serviceAccountKey.json");
 const Stripe = require("stripe");
 const stripe = Stripe('sk_test_51R7FEGQpGLybqVEL530ubCzxTCSylRakpA2xOOxUJlIivBpj0obkTL4ltpHGZFOGl1v07VgzPor4EYm9sLuBj15c00Ho2E9D9x');
 
-// // Inițializare Firebase Admin SDK
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount),
-//     databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
-// });
+// Inițializare Firebase Admin SDK
 admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com"
 });
+
 const db = admin.firestore();
 
-app.use(
-  cors({
-    origin: 'https://dulce-ro.vercel.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
-  })
-);
-
-
-// Handle OPTIONS preflight requests
-app.use(cors({
-  origin: ['https://dulce-ro.vercel.app', 'http://localhost:5001'], // Allow your frontend domain and local development
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+const app = express();
+app.use(cors());
 app.use(express.json());
 
 // Verificare că backend-ul funcționează
@@ -113,8 +95,8 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
             phone_number_collection: {
                 enabled: true
             },
-            success_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin || 'https://dulce-ro.vercel.app'}/cart`,
+            success_url: `${req.headers.origin || 'http://localhost:5173'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin || 'http://localhost:5173'}/cart`,
         });
 
         res.json({ id: session.id, url: session.url });

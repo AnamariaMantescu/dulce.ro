@@ -5,12 +5,12 @@ import App from "./App.vue";
 import router from "./router/index.js"; 
 import store from "./store"; // Importă store-ul
 
-// Import Toast Notification
+
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
 import axios from "axios";
-axios.defaults.baseURL = "https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app"; // Backend Express
+axios.defaults.baseURL = "http://localhost:5001"; 
 
 // === Import pentru Firebase ===
 import { auth } from "./firebase";

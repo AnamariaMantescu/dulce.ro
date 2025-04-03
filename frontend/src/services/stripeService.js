@@ -1,7 +1,7 @@
 // frontend/src/services/stripeService.js
 import axios from 'axios';
 
-const API_URL = 'https://backend-ciyopt2dv-anamaria-mantescus-projects.vercel.app/api/payment';
+const API_URL = 'http://localhost:5001/api/payment';
 
 const stripeService = {
   // Create a checkout session
