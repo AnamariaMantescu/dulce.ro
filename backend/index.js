@@ -11,7 +11,9 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
 
-const db = admin.firestore();
+const { getFirestore } = require('firebase-admin/firestore');
+const db = getFirestore();
+
 
 const app = express();
 app.use(cors());
