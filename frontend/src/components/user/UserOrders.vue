@@ -106,8 +106,9 @@
 
 <script>
 // Import the PDF library
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from '../../node_modules/jspdf/dist/jspdf.umd.min.js'
+import { applyPlugin } from 'jspdf-autotable'
+applyPlugin(jsPDF)
 
 export default {
   name: 'UserOrders',
