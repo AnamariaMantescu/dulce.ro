@@ -173,7 +173,7 @@ export default {
         const priceWithoutVAT = this.calculatePriceWithoutVAT(product.price || 0);
         const totalWithoutVAT = priceWithoutVAT * (product.quantity || 1);
         
-        // Get proper unit based on product type (if available)
+        // Get proper unit based on product type (if is available)
         let unit = 'buc';
         if (product.unit) {
           unit = product.unit;
